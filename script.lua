@@ -1817,3 +1817,162 @@ RunService.RenderStepped:Connect(function()
     local ping = math.floor(LocalPlayer:GetNetworkPing() * 1000)
     infoLabel.Text = osTime .. " | " .. fps .. " FPS | " .. ping .. " ms"
 end)
+-- ================= Fly Final Override =================
+Settings.Fly = false
+Settings.FlySpeed = 50
+
+-- 画面上のすべてのフライ関連ボタンを一旦全削除してリセット
+for _, v in pairs(Pages.Char:GetChildren()) do
+    if v:IsA("TextButton") and string.find(v.Text, "Fly") then
+        v:Destroy()
+    end
+end
+if flyBtn then flyBtn:Destroy() end
+if downBtn then downBtn:Destroy() end
+if flySpeedCtrl then flySpeedCtrl:Destroy() end
+if flyHeightCtrl then flyHeightCtrl:Destroy() end
+
+-- 新しいフライボタン（1つだけ）
+local flyBtn = createBtn(Pages.Char, "Fly: OFF", 130, 95, Color3.fromRGB(200, 50, 50), 110)
+flyBtn.MouseButton1Click:Connect(function()
+    Settings.Fly = not Settings.Fly
+    flyBtn.Text = "Fly: " .. (Settings.Fly and "ON" or "OFF")
+    flyBtn.BackgroundColor3 = Settings.Fly and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+    if downBtn then downBtn.Visible = Settings.Fly end
+end)
+
+-- フライ速度調整
+local flySpeedCtrl = Instance.new("Frame")
+flySpeedCtrl.Size = UDim2.new(0, 170, 0, 35)
+flySpeedCtrl.Position = UDim2.new(0, 130, 0, 50)
+flySpeedCtrl.BackgroundTransparency = 1
+flySpeedCtrl.Parent = Pages.Char
+
+local flySpeedMinus = Instance.new("TextButton")
+flySpeedMinus.Size = UDim2.new(0, 35, 1, 0)
+flySpeedMinus.BackgroundColor3 = Color3.fromRGB(180, 60, 60)
+flySpeedMinus.Text = "-"
+flySpeedMinus.TextColor3 = Color3.fromRGB(255, 255, 255)
+flySpeedMinus.Font = Enum.Font.SourceSansBold
+flySpeedMinus.Parent = flySpeedCtrl
+
+local flySpeedText = Instance.new("TextLabel")
+flySpeedText.Size = UDim2.new(0, 100, 1, 0)
+flySpeedText.Position = UDim2.new(0, 35, 0, 0)
+flySpeedText.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+flySpeedText.Text = "Speed: 50"
+flySpeedText.TextColor3 = Color3.fromRGB(255, 255, 255)
+flySpeedText.Font = Enum.Font.SourceSansBold
+flySpeedText.TextSize = 14
+flySpeedText.Parent = flySpeedCtrl
+
+local flySpeedPlus = Instance.new("TextButton")
+flySpeedPlus.Size = UDim2.new(0, 35, 1, 0)
+flySpeedPlus.Position = UDim2.new(0, 135, 0, 0)
+flySpeedPlus.BackgroundColor3 = Color3.fromRGB(60, 180, 60)
+flySpeedPlus.Text = "+"
+flySpeedPlus.TextColor3 = Color3.fromRGB(255, 255, 255)
+flySpeedPlus.Font = Enum.Font.SourceSansBold
+flySpeedPlus.Parent = flySpeedCtrl
+
+flySpeedMinus.MouseButton1Click:Connect(function()
+    Settings.FlySpeed = math.max(10, Settings.FlySpeed - 10)
+    flySpeedText.Text = "Speed: " .. Settings.FlySpeed
+end)
+flySpeedPlus.MouseButton1Click:Connect(function()
+    Settings.FlySpeed = math.min(500, Settings.FlySpeed + 10)
+    flySpeedText.Text = "Speed: " .. Settings.FlySpeed
+end)
+
+-- 下に下がるボタン（画面右下）
+local downBtn = Instance.new("TextButton")
+downBtn.Size = UDim2.new(0, 100, 0, 50)
+downBtn.Position = UDim2.new(1, -120, 1, -150)
+downBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+downBtn.BackgroundTransparency = 0.3
+downBtn.Text = "下に下がる"
+downBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+downBtn.TextSize = 16
+downBtn.Font = Enum.Font.SourceSansBold
+downBtn.Visible = false
+downBtn.Parent = ScreenGui
+local downCorner = Instance.new("UICorner", downBtn)
+downCorner.CornerRadius = UDim.new(0, 8)
+
+-- 入力検知とフライ処理
+local flyVelocity = nil
+local isJumping = false
+local isDownPressed = false
+
+UserInputService.JumpRequest:Connect(function()
+    if Settings.Fly then
+        isJumping = true
+        task.delay(0.1, function() isJumping = false end)
+    end
+end)
+
+downBtn.MouseButton1Down:Connect(function() isDownPressed = true end)
+downBtn.MouseButton1Up:Connect(function() isDownPressed = false end)
+downBtn.MouseLeave:Connect(function() isDownPressed = false end)
+
+RunService.Heartbeat:Connect(function()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hum or not hrp then return end
+
+    if Settings.Fly then
+        hum.PlatformStand = true
+        if not flyVelocity then
+            flyVelocity = Instance.new("BodyVelocity")
+            flyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+            flyVelocity.Velocity = Vector3.zero
+            flyVelocity.Parent = hrp
+        end
+
+        local moveDir = hum.MoveDirection
+        local targetVel = moveDir * Settings.FlySpeed
+        
+        if isJumping or UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            targetVel = targetVel + Vector3.new(0, 50, 0)
+        elseif isDownPressed or UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+            targetVel = targetVel - Vector3.new(0, 50, 0)
+        end
+
+        flyVelocity.Velocity = targetVel
+    else
+        if hum.PlatformStand then hum.PlatformStand = false end
+        if flyVelocity then flyVelocity:Destroy() flyVelocity = nil end
+    end
+end)
+
+-- ================= Header Info =================
+if infoLabel then infoLabel:Destroy() end
+local infoLabel = Instance.new("TextLabel")
+infoLabel.Size = UDim2.new(0, 200, 0, 30)
+infoLabel.Position = UDim2.new(1, -200, 0, 0)
+infoLabel.BackgroundTransparency = 1
+infoLabel.Text = "00:00:00 | 60 FPS | -- ms"
+infoLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+infoLabel.Font = Enum.Font.SourceSansBold
+infoLabel.TextSize = 12
+infoLabel.TextXAlignment = Enum.TextXAlignment.Right
+infoLabel.Parent = Header
+
+local fps = 60
+local frames = 0
+local lastTime = tick()
+
+RunService.RenderStepped:Connect(function()
+    frames = frames + 1
+    if tick() - lastTime >= 1 then
+        fps = frames
+        frames = 0
+        lastTime = tick()
+    end
+    
+    local osTime = os.date("%H:%M:%S")
+    local ping = math.floor(LocalPlayer:GetNetworkPing() * 1000)
+    infoLabel.Text = osTime .. " | " .. fps .. " FPS | " .. ping .. " ms"
+end)
