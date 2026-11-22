@@ -606,3 +606,4 @@ RunService.Heartbeat:Connect(function()
         if flyVelocity then flyVelocity:Destroy() flyVelocity = nil end
     end
 end)
+if downBtn then downBtn.Position = UDim2.new(1, -80, 0.6, 0) end
