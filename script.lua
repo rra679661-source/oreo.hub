@@ -1261,4 +1261,83 @@ finalTP.MouseButton1Click:Connect(function()
             myChar.HumanoidRootPart.CFrame = targetHrp.CFrame + Vector3.new(0, 3, 0)
         end
     end
+end)-- ================= トリガーボット超強化版（付け足し用） =================
+-- 既存のトリガーボット処理を無効化（上書き）します
+if isFiring ~= nil then isFiring = nil end
+Settings.Triggerbot = false
+Settings.TriggerbotFOV = 150
+
+-- UIのトリガーボットボタンのテキストを初期化
+if triggerBtn then
+    triggerBtn.Text = "Triggerbot: OFF"
+    triggerBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+end
+
+-- 画面中央の敵を検知する関数（FOV 150px以内）
+local function IsEnemyInCrosshair()
+    local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and not IsTeammate(player) and player.Character then
+            local hum = player.Character:FindFirstChildOfClass("Humanoid")
+            local head = player.Character:FindFirstChild("Head")
+            local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+            if hum and hum.Health > 0 and (head or hrp) then
+                local targetPart = head or hrp
+                local screenPos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+                if onScreen then
+                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
+                    if dist < Settings.TriggerbotFOV then 
+                        return true 
+                    end
+                end
+            end
+        end
+    end
+    return false
+end
+
+-- 強化された自動射撃ループ
+local firing = false
+task.spawn(function()
+    while task.wait(0.01) do -- 0.01秒ごとに高速判定
+        if Settings.Triggerbot then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChildOfClass("Humanoid") and char.Humanoid.Health > 0 then
+                if IsEnemyInCrosshair() then
+                    if not firing then
+                        firing = true
+                        
+                        -- 1. 持っている武器（Tool）を直接発動させる
+                        local tool = char:FindFirstChildOfClass("Tool")
+                        if tool then 
+                            pcall(function() tool:Activate() end) 
+                        end
+                        
+                        -- 2. マウスクリック（射撃入力）をエミュレートする
+                        pcall(function() VirtualUser:Button1Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame) end)
+                    end
+                else
+                    if firing then
+                        firing = false
+                        -- マウスクリックを離す
+                        pcall(function() VirtualUser:Button1Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame) end)
+                    end
+                end
+            end
+        else
+            if firing then
+                firing = false
+                pcall(function() VirtualUser:Button1Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame) end)
+            end
+        end
+    end
 end)
+
+-- ボタンのクリックイベントを再設定
+if triggerBtn then
+    triggerBtn.MouseButton1Click:Connect(function()
+        Settings.Triggerbot = not Settings.Triggerbot
+        triggerBtn.Text = "Triggerbot: " .. (Settings.Triggerbot and "ON" or "OFF")
+        triggerBtn.BackgroundColor3 = Settings.Triggerbot and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+    end)
+end
