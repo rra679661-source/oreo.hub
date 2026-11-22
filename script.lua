@@ -760,3 +760,170 @@ RunService.Heartbeat:Connect(function()
         if flyVelocity then flyVelocity:Destroy() flyVelocity = nil end
     end
 end)
+-- ================= Fly Feature 最終修正 =================
+if flyVelocity then flyVelocity:Destroy() end
+if downBtn then downBtn:Destroy() end
+
+local oldFlySpeed = Settings.FlySpeed or 50
+local oldFlyHeightSpeed = Settings.FlyHeightSpeed or 50
+
+Settings.Fly = false
+Settings.FlySpeed = oldFlySpeed
+Settings.FlyHeightSpeed = oldFlyHeightSpeed
+
+-- 下降ボタン
+local downBtn = Instance.new("TextButton")
+downBtn.Size = UDim2.new(0, 50, 0, 50)
+downBtn.Position = UDim2.new(1, -80, 0.5, -25)
+downBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+downBtn.BackgroundTransparency = 0.5
+downBtn.Text = "v"
+downBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+downBtn.TextSize = 30
+downBtn.Font = Enum.Font.SourceSansBold
+downBtn.Visible = false
+downBtn.Parent = ScreenGui
+local downCorner = Instance.new("UICorner", downBtn)
+downCorner.CornerRadius = UDim.new(1, 0)
+
+-- フライON/OFFボタン
+local flyBtn = createBtn(Pages.Char, "Fly: OFF", 260, 95, Color3.fromRGB(200, 50, 50), 110)
+flyBtn.MouseButton1Click:Connect(function()
+    Settings.Fly = not Settings.Fly
+    flyBtn.Text = "Fly: " .. (Settings.Fly and "ON" or "OFF")
+    flyBtn.BackgroundColor3 = Settings.Fly and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+    downBtn.Visible = Settings.Fly
+end)
+
+-- フライ速度（横移動）調整
+local flyCtrl = Instance.new("Frame")
+flyCtrl.Size = UDim2.new(0, 170, 0, 35)
+flyCtrl.Position = UDim2.new(0, 120, 0, 50)
+flyCtrl.BackgroundTransparency = 1
+flyCtrl.Parent = Pages.Char
+
+local flyMinusBtn = Instance.new("TextButton")
+flyMinusBtn.Size = UDim2.new(0, 35, 1, 0)
+flyMinusBtn.BackgroundColor3 = Color3.fromRGB(180, 60, 60)
+flyMinusBtn.Text = "-"
+flyMinusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+flyMinusBtn.Font = Enum.Font.SourceSansBold
+flyMinusBtn.Parent = flyCtrl
+
+local flyText = Instance.new("TextLabel")
+flyText.Size = UDim2.new(0, 100, 1, 0)
+flyText.Position = UDim2.new(0, 35, 0, 0)
+flyText.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+flyText.Text = "Fly Speed: " .. Settings.FlySpeed
+flyText.TextColor3 = Color3.fromRGB(255, 255, 255)
+flyText.Font = Enum.Font.SourceSansBold
+flyText.TextSize = 14
+flyText.Parent = flyCtrl
+
+local flyPlusBtn = Instance.new("TextButton")
+flyPlusBtn.Size = UDim2.new(0, 35, 1, 0)
+flyPlusBtn.Position = UDim2.new(0, 135, 0, 0)
+flyPlusBtn.BackgroundColor3 = Color3.fromRGB(60, 180, 60)
+flyPlusBtn.Text = "+"
+flyPlusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+flyPlusBtn.Font = Enum.Font.SourceSansBold
+flyPlusBtn.Parent = flyCtrl
+
+flyMinusBtn.MouseButton1Click:Connect(function()
+    Settings.FlySpeed = math.max(10, Settings.FlySpeed - 10)
+    flyText.Text = "Fly Speed: " .. Settings.FlySpeed
+end)
+flyPlusBtn.MouseButton1Click:Connect(function()
+    Settings.FlySpeed = math.min(500, Settings.FlySpeed + 10)
+    flyText.Text = "Fly Speed: " .. Settings.FlySpeed
+end)
+
+-- フライ高さ（上下移動）調整
+local flyHeightCtrl = Instance.new("Frame")
+flyHeightCtrl.Size = UDim2.new(0, 170, 0, 35)
+flyHeightCtrl.Position = UDim2.new(0, 120, 0, 95)
+flyHeightCtrl.BackgroundTransparency = 1
+flyHeightCtrl.Parent = Pages.Char
+
+local flyHeightMinusBtn = Instance.new("TextButton")
+flyHeightMinusBtn.Size = UDim2.new(0, 35, 1, 0)
+flyHeightMinusBtn.BackgroundColor3 = Color3.fromRGB(180, 60, 60)
+flyHeightMinusBtn.Text = "-"
+flyHeightMinusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+flyHeightMinusBtn.Font = Enum.Font.SourceSansBold
+flyHeightMinusBtn.Parent = flyHeightCtrl
+
+local flyHeightText = Instance.new("TextLabel")
+flyHeightText.Size = UDim2.new(0, 100, 1, 0)
+flyHeightText.Position = UDim2.new(0, 35, 0, 0)
+flyHeightText.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+flyHeightText.Text = "Fly Height: " .. Settings.FlyHeightSpeed
+flyHeightText.TextColor3 = Color3.fromRGB(255, 255, 255)
+flyHeightText.Font = Enum.Font.SourceSansBold
+flyHeightText.TextSize = 14
+flyHeightText.Parent = flyHeightCtrl
+
+local flyHeightPlusBtn = Instance.new("TextButton")
+flyHeightPlusBtn.Size = UDim2.new(0, 35, 1, 0)
+flyHeightPlusBtn.Position = UDim2.new(0, 135, 0, 0)
+flyHeightPlusBtn.BackgroundColor3 = Color3.fromRGB(60, 180, 60)
+flyHeightPlusBtn.Text = "+"
+flyHeightPlusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+flyHeightPlusBtn.Font = Enum.Font.SourceSansBold
+flyHeightPlusBtn.Parent = flyHeightCtrl
+
+flyHeightMinusBtn.MouseButton1Click:Connect(function()
+    Settings.FlyHeightSpeed = math.max(10, Settings.FlyHeightSpeed - 10)
+    flyHeightText.Text = "Fly Height: " .. Settings.FlyHeightSpeed
+end)
+flyHeightPlusBtn.MouseButton1Click:Connect(function()
+    Settings.FlyHeightSpeed = math.min(500, Settings.FlyHeightSpeed + 10)
+    flyHeightText.Text = "Fly Height: " .. Settings.FlyHeightSpeed
+end)
+
+-- 入力検知
+local isJumping = false
+local isDownPressed = false
+UserInputService.JumpRequest:Connect(function()
+    if Settings.Fly then
+        isJumping = true
+        task.delay(0.1, function() isJumping = false end)
+    end
+end)
+downBtn.MouseButton1Down:Connect(function() isDownPressed = true end)
+downBtn.MouseButton1Up:Connect(function() isDownPressed = false end)
+downBtn.MouseButton1Click:Connect(function() isDownPressed = false end)
+
+-- フライ処理
+local flyVelocity = nil
+RunService.Heartbeat:Connect(function()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hum or not hrp then return end
+
+    if Settings.Fly then
+        hum.PlatformStand = true
+        if not flyVelocity then
+            flyVelocity = Instance.new("BodyVelocity")
+            flyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+            flyVelocity.Velocity = Vector3.zero
+            flyVelocity.Parent = hrp
+        end
+
+        local moveDir = hum.MoveDirection
+        local targetVel = moveDir * Settings.FlySpeed
+        
+        if isJumping or UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            targetVel = targetVel + Vector3.new(0, Settings.FlyHeightSpeed, 0)
+        elseif isDownPressed or UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+            targetVel = targetVel - Vector3.new(0, Settings.FlyHeightSpeed, 0)
+        end
+
+        flyVelocity.Velocity = targetVel
+    else
+        if hum.PlatformStand then hum.PlatformStand = false end
+        if flyVelocity then flyVelocity:Destroy() flyVelocity = nil end
+    end
+end)
