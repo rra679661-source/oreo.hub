@@ -687,3 +687,76 @@ RunService.Heartbeat:Connect(function()
         if flyVelocity then flyVelocity:Destroy() flyVelocity = nil end
     end
 end)
+-- ================= Fly Feature (追加用) =================
+Settings.Fly = false
+local isJumping = false
+local isDownPressed = false
+
+-- 画面の右側に「下降ボタン」を追加（ゲームUIと被らない位置）
+local downBtn = Instance.new("TextButton")
+downBtn.Size = UDim2.new(0, 50, 0, 50)
+downBtn.Position = UDim2.new(1, -80, 0.5, -25)
+downBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+downBtn.BackgroundTransparency = 0.5
+downBtn.Text = "v"
+downBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+downBtn.TextSize = 30
+downBtn.Font = Enum.Font.SourceSansBold
+downBtn.Visible = false
+downBtn.Parent = ScreenGui
+local downCorner = Instance.new("UICorner", downBtn)
+downCorner.CornerRadius = UDim.new(1, 0)
+
+-- キャラタブにフライボタンを追加
+local flyBtn = createBtn(Pages.Char, "Fly: OFF", 260, 95, Color3.fromRGB(200, 50, 50), 110)
+flyBtn.MouseButton1Click:Connect(function()
+    Settings.Fly = not Settings.Fly
+    flyBtn.Text = "Fly: " .. (Settings.Fly and "ON" or "OFF")
+    flyBtn.BackgroundColor3 = Settings.Fly and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+    downBtn.Visible = Settings.Fly
+end)
+
+-- 入力検知
+UserInputService.JumpRequest:Connect(function()
+    if Settings.Fly then
+        isJumping = true
+        task.delay(0.1, function() isJumping = false end)
+    end
+end)
+downBtn.MouseButton1Down:Connect(function() isDownPressed = true end)
+downBtn.MouseButton1Up:Connect(function() isDownPressed = false end)
+downBtn.MouseLeave:Connect(function() isDownPressed = false end)
+
+-- フライ処理（毎フレーム実行）
+local flyVelocity = nil
+RunService.Heartbeat:Connect(function()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hum or not hrp then return end
+
+    if Settings.Fly then
+        hum.PlatformStand = true
+        if not flyVelocity then
+            flyVelocity = Instance.new("BodyVelocity")
+            flyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+            flyVelocity.Velocity = Vector3.zero
+            flyVelocity.Parent = hrp
+        end
+
+        local moveDir = hum.MoveDirection
+        local targetVel = moveDir * 50
+
+        if isJumping or UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            targetVel = targetVel + Vector3.new(0, 50, 0)
+        elseif isDownPressed or UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+            targetVel = targetVel - Vector3.new(0, 50, 0)
+        end
+
+        flyVelocity.Velocity = targetVel
+    else
+        if hum.PlatformStand then hum.PlatformStand = false end
+        if flyVelocity then flyVelocity:Destroy() flyVelocity = nil end
+    end
+end)
