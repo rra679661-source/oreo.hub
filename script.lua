@@ -1153,4 +1153,112 @@ finalTriggerbotBtn.MouseButton1Click:Connect(function()
     Settings.Triggerbot = not Settings.Triggerbot
     finalTriggerbotBtn.Text = "Triggerbot: " .. (Settings.Triggerbot and "ON" or "OFF")
     finalTriggerbotBtn.BackgroundColor3 = Settings.Triggerbot and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+end)-- ================= Absolute Final Fix =================
+
+-- 1. 画面に散らばっているすべてのTriggerbotボタン（枠外の赤いボタン含む）を完全に削除
+for _, v in pairs(ScreenGui:GetDescendants()) do
+    if v:IsA("TextButton") and string.find(v.Text, "Triggerbot") then
+        v:Destroy()
+    end
+end
+for _, v in pairs(Pages.Aim:GetDescendants()) do
+    if v:IsA("TextButton") and string.find(v.Text, "Triggerbot") then
+        v:Destroy()
+    end
+end
+for _, v in pairs(Pages.Combat:GetDescendants()) do
+    if v:IsA("TextButton") and string.find(v.Text, "Triggerbot") then
+        v:Destroy()
+    end
+end
+
+-- 2. エイムタブの正しい位置（Silent Aimの下）に、新しいボタンを1つだけ綺麗に配置
+local finalTB = createBtn(Pages.Aim, "Triggerbot: OFF", 0, 50, Color3.fromRGB(200, 50, 50), 350)
+Settings.Triggerbot = false
+
+-- 3. ボタンのON/OFF切り替え処理
+finalTB.MouseButton1Click:Connect(function()
+    Settings.Triggerbot = not Settings.Triggerbot
+    finalTB.Text = "Triggerbot: " .. (Settings.Triggerbot and "ON" or "OFF")
+    finalTB.BackgroundColor3 = Settings.Triggerbot and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+end)
+
+-- 4. 画面中央に敵がいるか確認する関数（トリガーの判定）
+local function IsEnemyInCrosshair()
+    local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local hum = player.Character:FindFirstChildOfClass("Humanoid")
+            local head = player.Character:FindFirstChild("Head")
+            local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+            if hum and hum.Health > 0 and (head or hrp) then
+                if LocalPlayer.Team == nil or player.Team ~= LocalPlayer.Team then
+                    local targetPart = head or hrp
+                    local screenPos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+                    if onScreen then
+                        local dist = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
+                        if dist < 150 then return true end
+                    end
+                end
+            end
+        end
+    end
+    return false
+end
+
+-- 5. 自動射撃の実行ループ（一番強力な擬似クリック処理）
+local firing = false
+task.spawn(function()
+    while task.wait(0.01) do
+        if Settings.Triggerbot then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChildOfClass("Humanoid") and char.Humanoid.Health > 0 then
+                if IsEnemyInCrosshair() then
+                    if not firing then
+                        firing = true
+                        local tool = char:FindFirstChildOfClass("Tool")
+                        if tool then pcall(function() tool:Activate() end) end
+                        pcall(function() VirtualUser:Button1Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame) end)
+                    end
+                else
+                    if firing then
+                        firing = false
+                        pcall(function() VirtualUser:Button1Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame) end)
+                    end
+                end
+            end
+        else
+            if firing then
+                firing = false
+                pcall(function() VirtualUser:Button1Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame) end)
+            end
+        end
+    end
+end)
+
+-- 6. これまでの「TP to Enemy」ボタンもCombatタブの綺麗な位置に再配置
+for _, v in pairs(Pages.Combat:GetDescendants()) do
+    if v:IsA("TextButton") and string.find(v.Text, "TP") then v:Destroy() end
+end
+local finalTP = createBtn(Pages.Combat, "TP to Enemy", 0, 5, Color3.fromRGB(50, 150, 50), 350)
+finalTP.MouseButton1Click:Connect(function()
+    local enemies = {}
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local hum = player.Character:FindFirstChildOfClass("Humanoid")
+            local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+            if hum and hum.Health > 0 and hrp then
+                if LocalPlayer.Team == nil or player.Team ~= LocalPlayer.Team then
+                    table.insert(enemies, hrp)
+                end
+            end
+        end
+    end
+    if #enemies > 0 then
+        local targetHrp = enemies[math.random(1, #enemies)]
+        local myChar = LocalPlayer.Character
+        if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+            myChar.HumanoidRootPart.CFrame = targetHrp.CFrame + Vector3.new(0, 3, 0)
+        end
+    end
 end)
