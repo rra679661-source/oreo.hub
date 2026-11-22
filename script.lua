@@ -1064,3 +1064,26 @@ task.spawn(function()
         end
     end
 end)
+-- ================= Triggerbot Position Fix =================
+if aimTriggerbotBtn then aimTriggerbotBtn:Destroy() end
+
+local aimTriggerbotBtn = Instance.new("TextButton")
+aimTriggerbotBtn.Size = UDim2.new(0, 150, 0, 40)
+aimTriggerbotBtn.Position = UDim2.new(0.5, -75, 0.5, -20) -- 画面のド真ん中
+aimTriggerbotBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+aimTriggerbotBtn.Text = "Triggerbot: OFF"
+aimTriggerbotBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+aimTriggerbotBtn.Font = Enum.Font.SourceSansBold
+aimTriggerbotBtn.TextSize = 16
+aimTriggerbotBtn.ZIndex = 9999
+aimTriggerbotBtn.Parent = ScreenGui
+
+-- 今の状態（ONかOFFか）を引き継ぐ
+aimTriggerbotBtn.Text = "Triggerbot: " .. (Settings.Triggerbot and "ON" or "OFF")
+aimTriggerbotBtn.BackgroundColor3 = Settings.Triggerbot and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+
+aimTriggerbotBtn.MouseButton1Click:Connect(function()
+    Settings.Triggerbot = not Settings.Triggerbot
+    aimTriggerbotBtn.Text = "Triggerbot: " .. (Settings.Triggerbot and "ON" or "OFF")
+    aimTriggerbotBtn.BackgroundColor3 = Settings.Triggerbot and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+end)
