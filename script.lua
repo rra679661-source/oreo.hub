@@ -1341,3 +1341,81 @@ if triggerBtn then
         triggerBtn.BackgroundColor3 = Settings.Triggerbot and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
     end)
 end
+-- ================= Rivals専用 Triggerbot (最終手段) =================
+Settings.Triggerbot = false
+Settings.TriggerbotFOV = 150
+
+-- トリガーボット用のUIボタン（一番手前に強制表示）
+local FinalTriggerBtn = Instance.new("TextButton")
+FinalTriggerBtn.Size = UDim2.new(0, 150, 0, 40)
+FinalTriggerBtn.Position = UDim2.new(0, 20, 0, 350)
+FinalTriggerBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+FinalTriggerBtn.Text = "Trigger (Final): OFF"
+FinalTriggerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+FinalTriggerBtn.Font = Enum.Font.SourceSansBold
+FinalTriggerBtn.TextSize = 14
+FinalTriggerBtn.ZIndex = 999
+FinalTriggerBtn.Parent = ScreenGui
+
+FinalTriggerBtn.MouseButton1Click:Connect(function()
+    Settings.Triggerbot = not Settings.Triggerbot
+    FinalTriggerBtn.Text = "Trigger (Final): " .. (Settings.Triggerbot and "ON" or "OFF")
+    FinalTriggerBtn.BackgroundColor3 = Settings.Triggerbot and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+end)
+
+-- 中央に敵がいるか判定
+local function CheckEnemy()
+    local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local hum = player.Character:FindFirstChildOfClass("Humanoid")
+            local head = player.Character:FindFirstChild("Head")
+            if hum and hum.Health > 0 and head then
+                if LocalPlayer.Team == nil or player.Team ~= LocalPlayer.Team then
+                    local screenPos, onScreen = Camera:WorldToViewportPoint(head.Position)
+                    if onScreen then
+                        local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
+                        if dist < Settings.TriggerbotFOV then return true end
+                    end
+                end
+            end
+        end
+    end
+    return false
+end
+
+-- 発砲処理
+local isShooting = false
+local toolDebounce = false
+
+task.spawn(function()
+    while task.wait(0.01) do
+        if Settings.Triggerbot and CheckEnemy() then
+            if not isShooting then
+                isShooting = true
+                local char = LocalPlayer.Character
+                if char then
+                    -- 1. ツールの直接発動（連射用にデバウンスを入れる）
+                    if not toolDebounce then
+                        toolDebounce = true
+                        local tool = char:FindFirstChildOfClass("Tool")
+                        if tool then 
+                            -- Rivalsの銃はActivateではなく、内部のリモートを叩く必要がある場合がありますが、
+                            -- まずはActivateを連打します
+                            pcall(function() tool:Activate() end)
+                        end
+                        task.delay(0.1, function() toolDebounce = false end)
+                    end
+                    
+                    -- 2. マウスクリックのエミュレート（Deltaの機能をフル活用）
+                    pcall(function() VirtualUser:Button1Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame) end)
+                end
+            end
+        else
+            if isShooting then
+                isShooting = false
+                pcall(function() VirtualUser:Button1Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame) end)
+            end
+        end
+    end
+end)
