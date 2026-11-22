@@ -608,3 +608,76 @@ RunService.Heartbeat:Connect(function()
         if flyVelocity then flyVelocity:Destroy() flyVelocity = nil end
     end
 end)
+-- ================= New Combat Tab & Random TP =================
+
+-- 1. 新しい「戦闘」タブのボタンを作成（タブコンテナに追加）
+local combatTabBtn = createTab("Combat", 0, 0) -- 仮でサイズ0にして後で調整
+-- 既存のタブの幅を少し詰めて、右端に「Combat」を追加する
+espTabBtn.Size = UDim2.new(0, 75, 1, 0)
+aimTabBtn.Size = UDim2.new(0, 75, 1, 0)
+aimTabBtn.Position = UDim2.new(0, 75, 0, 0)
+charTabBtn.Size = UDim2.new(0, 75, 1, 0)
+charTabBtn.Position = UDim2.new(0, 150, 0, 0)
+secTabBtn.Size = UDim2.new(0, 75, 1, 0)
+secTabBtn.Position = UDim2.new(0, 225, 0, 0)
+setTabBtn.Size = UDim2.new(0, 75, 1, 0)
+setTabBtn.Position = UDim2.new(0, 300, 0, 0)
+
+combatTabBtn.Size = UDim2.new(0, 85, 1, 0)
+combatTabBtn.Position = UDim2.new(0, 375, 0, 0)
+combatTabBtn.Text = "Combat"
+
+-- 2. 新しいページ（画面）を作成
+local CombatPage = Instance.new("Frame")
+CombatPage.Size = UDim2.new(1, 0, 1, 0)
+CombatPage.BackgroundTransparency = 1
+CombatPage.Visible = false
+CombatPage.Parent = Content
+Pages.Combat = CombatPage -- 既存のPagesテーブルに追加
+
+-- 3. タブ切り替え処理の更新
+local oldSwitchTab = switchTab
+switchTab = function(activePage, activeBtn)
+    for _, page in pairs(Pages) do page.Visible = false end
+    activePage.Visible = true
+    for _, btn in pairs({espTabBtn, aimTabBtn, charTabBtn, secTabBtn, setTabBtn, combatTabBtn}) do
+        btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    end
+    activeBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    activeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+end
+
+-- 新しいタブクリック時の処理を再設定
+espTabBtn.MouseButton1Click:Connect(function() switchTab(Pages.ESP, espTabBtn) end)
+aimTabBtn.MouseButton1Click:Connect(function() switchTab(Pages.Aim, aimTabBtn) end)
+charTabBtn.MouseButton1Click:Connect(function() switchTab(Pages.Char, charTabBtn) end)
+secTabBtn.MouseButton1Click:Connect(function() switchTab(Pages.Security, secTabBtn) end)
+setTabBtn.MouseButton1Click:Connect(function() switchTab(Pages.Settings, setTabBtn) end)
+combatTabBtn.MouseButton1Click:Connect(function() switchTab(Pages.Combat, combatTabBtn) end)
+
+-- 4. 戦闘タブに「TP to Enemy」ボタンを配置
+local tpEnemyBtn = createBtn(Pages.Combat, "TP to Enemy", 0, 5, Color3.fromRGB(50, 150, 50), 350)
+
+tpEnemyBtn.MouseButton1Click:Connect(function()
+    local enemies = {}
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local hum = player.Character:FindFirstChildOfClass("Humanoid")
+            local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+            if hum and hum.Health > 0 and hrp then
+                if LocalPlayer.Team == nil or player.Team ~= LocalPlayer.Team then
+                    table.insert(enemies, hrp)
+                end
+            end
+        end
+    end
+    
+    if #enemies > 0 then
+        local targetHrp = enemies[math.random(1, #enemies)]
+        local myChar = LocalPlayer.Character
+        if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+            myChar.HumanoidRootPart.CFrame = targetHrp.CFrame + Vector3.new(0, 3, 0)
+        end
+    end
+end)
