@@ -755,4 +755,84 @@ tpEnemyBtn.MouseButton1Click:Connect(function()
             myChar.HumanoidRootPart.CFrame = targetHrp.CFrame + Vector3.new(0, 3, 0)
         end
     end
+end)-- ================= Combat Tab Force Fix =================
+
+-- 既存の5つのタブを少し左に寄せて幅を狭める
+if espTabBtn then espTabBtn.Size = UDim2.new(0, 75, 1, 0); espTabBtn.Position = UDim2.new(0, 0, 0, 0) end
+if aimTabBtn then aimTabBtn.Size = UDim2.new(0, 75, 1, 0); aimTabBtn.Position = UDim2.new(0, 75, 0, 0) end
+if charTabBtn then charTabBtn.Size = UDim2.new(0, 75, 1, 0); charTabBtn.Position = UDim2.new(0, 150, 0, 0) end
+if secTabBtn then secTabBtn.Size = UDim2.new(0, 75, 1, 0); secTabBtn.Position = UDim2.new(0, 225, 0, 0) end
+if setTabBtn then setTabBtn.Size = UDim2.new(0, 75, 1, 0); setTabBtn.Position = UDim2.new(0, 300, 0, 0) end
+
+-- 新しい「Combat」タブのボタンを一番上に強制表示
+local combatTabBtn = Instance.new("TextButton")
+combatTabBtn.Size = UDim2.new(0, 85, 1, 0)
+combatTabBtn.Position = UDim2.new(0, 375, 0, 0)
+combatTabBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+combatTabBtn.Text = "Combat"
+combatTabBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+combatTabBtn.Font = Enum.Font.SourceSansBold
+combatTabBtn.TextSize = 13
+combatTabBtn.ZIndex = 10
+combatTabBtn.Parent = TabContainer
+
+-- 新しいページ（画面）を作成
+local CombatPage = Instance.new("Frame")
+CombatPage.Size = UDim2.new(1, 0, 1, 0)
+CombatPage.BackgroundTransparency = 1
+CombatPage.Visible = false
+CombatPage.Parent = Content
+Pages.Combat = CombatPage
+
+-- タブ切り替え処理
+combatTabBtn.MouseButton1Click:Connect(function()
+    for _, page in pairs(Pages) do page.Visible = false end
+    CombatPage.Visible = true
+    for _, btn in pairs({espTabBtn, aimTabBtn, charTabBtn, secTabBtn, setTabBtn, combatTabBtn}) do
+        if btn then
+            btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+        end
+    end
+    combatTabBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    combatTabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+end)
+
+-- 他のタブが押されたらCombatタブの色を戻す処理
+local function resetCombatTab()
+    if combatTabBtn then
+        combatTabBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        combatTabBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    end
+end
+if espTabBtn then espTabBtn.MouseButton1Click:Connect(resetCombatTab) end
+if aimTabBtn then aimTabBtn.MouseButton1Click:Connect(resetCombatTab) end
+if charTabBtn then charTabBtn.MouseButton1Click:Connect(resetCombatTab) end
+if secTabBtn then secTabBtn.MouseButton1Click:Connect(resetCombatTab) end
+if setTabBtn then setTabBtn.MouseButton1Click:Connect(resetCombatTab) end
+
+-- 戦闘タブに「TP to Enemy」ボタンを配置
+local tpEnemyBtn = createBtn(CombatPage, "TP to Enemy", 0, 5, Color3.fromRGB(50, 150, 50), 350)
+
+tpEnemyBtn.MouseButton1Click:Connect(function()
+    local enemies = {}
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local hum = player.Character:FindFirstChildOfClass("Humanoid")
+            local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+            if hum and hum.Health > 0 and hrp then
+                if LocalPlayer.Team == nil or player.Team ~= LocalPlayer.Team then
+                    table.insert(enemies, hrp)
+                end
+            end
+        end
+    end
+    
+    if #enemies > 0 then
+        local targetHrp = enemies[math.random(1, #enemies)]
+        local myChar = LocalPlayer.Character
+        if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+            myChar.HumanoidRootPart.CFrame = targetHrp.CFrame + Vector3.new(0, 3, 0)
+        end
+    end
 end)
