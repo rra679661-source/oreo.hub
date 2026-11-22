@@ -908,4 +908,86 @@ task.spawn(function()
             end
         end
     end
+end)-- ================= Triggerbot Absolute Fix =================
+
+Settings.Triggerbot = false
+Settings.TriggerbotFOV = 150
+
+-- エイムタブ（Pages.Aim）の真ん中あたりに直接ボタンを生成
+local aimTriggerbotBtn = Instance.new("TextButton")
+aimTriggerbotBtn.Size = UDim2.new(0, 250, 0, 40)
+aimTriggerbotBtn.Position = UDim2.new(0, 10, 0, 50)
+aimTriggerbotBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+aimTriggerbotBtn.Text = "Triggerbot: OFF"
+aimTriggerbotBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+aimTriggerbotBtn.Font = Enum.Font.SourceSansBold
+aimTriggerbotBtn.TextSize = 16
+aimTriggerbotBtn.ZIndex = 10
+aimTriggerbotBtn.Parent = Pages.Aim
+
+-- ボタンが押された時の処理
+aimTriggerbotBtn.MouseButton1Click:Connect(function()
+    Settings.Triggerbot = not Settings.Triggerbot
+    aimTriggerbotBtn.Text = "Triggerbot: " .. (Settings.Triggerbot and "ON" or "OFF")
+    aimTriggerbotBtn.BackgroundColor3 = Settings.Triggerbot and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+end)
+
+-- 画面中央に敵がいるか確認する関数
+local function IsEnemyInCrosshair()
+    local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local hum = player.Character:FindFirstChildOfClass("Humanoid")
+            local head = player.Character:FindFirstChild("Head")
+            local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+            
+            if hum and hum.Health > 0 and (head or hrp) then
+                if LocalPlayer.Team == nil or player.Team ~= LocalPlayer.Team then
+                    local targetPart = head or hrp
+                    local screenPos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+                    
+                    if onScreen then
+                        local dist = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
+                        if dist < Settings.TriggerbotFOV then
+                            return true
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return false
+end
+
+-- トリガーボットの実行ループ
+local isFiring = false
+task.spawn(function()
+    while task.wait(0.01) do
+        if Settings.Triggerbot then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChildOfClass("Humanoid").Health > 0 then
+                if IsEnemyInCrosshair() then
+                    if not isFiring then
+                        isFiring = true
+                        local tool = char:FindFirstChildOfClass("Tool")
+                        if tool then
+                            pcall(function() tool:Activate() end)
+                        end
+                        pcall(function() VirtualUser:Button1Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame) end)
+                    end
+                else
+                    if isFiring then
+                        isFiring = false
+                        pcall(function() VirtualUser:Button1Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame) end)
+                    end
+                end
+            end
+        else
+            if isFiring then
+                isFiring = false
+                pcall(function() VirtualUser:Button1Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame) end)
+            end
+        end
+    end
 end)
