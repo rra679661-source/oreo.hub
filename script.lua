@@ -1120,3 +1120,37 @@ finalTriggerbotBtn.MouseButton1Click:Connect(function()
     finalTriggerbotBtn.Text = "Triggerbot: " .. (Settings.Triggerbot and "ON" or "OFF")
     finalTriggerbotBtn.BackgroundColor3 = Settings.Triggerbot and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
 end)
+-- ================= 最終修正: Triggerbotの完全な整理 =================
+
+-- 1. 画面下の邪魔な赤いボタンを消す
+for _, v in pairs(ScreenGui:GetChildren()) do
+    if v:IsA("TextButton") and string.find(v.Text, "Triggerbot") then
+        v:Destroy()
+    end
+end
+
+-- 2. エイムタブの中にある古いボタンを消す
+for _, v in pairs(Pages.Aim:GetChildren()) do
+    if v:IsA("TextButton") and string.find(v.Text, "Triggerbot") then
+        v:Destroy()
+    end
+end
+
+-- 3. エイムタブの「Silent Aim (Soon)」のすぐ下に新しいボタンを1つだけ作る
+local finalTriggerbotBtn = createBtn(Pages.Aim, "Triggerbot: OFF", 0, 50, Color3.fromRGB(200, 50, 50), 350)
+
+-- 設定状態を引き継ぐ
+if Settings.Triggerbot then
+    finalTriggerbotBtn.Text = "Triggerbot: ON"
+    finalTriggerbotBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+else
+    finalTriggerbotBtn.Text = "Triggerbot: OFF"
+    finalTriggerbotBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+end
+
+-- ボタンを押した時の処理
+finalTriggerbotBtn.MouseButton1Click:Connect(function()
+    Settings.Triggerbot = not Settings.Triggerbot
+    finalTriggerbotBtn.Text = "Triggerbot: " .. (Settings.Triggerbot and "ON" or "OFF")
+    finalTriggerbotBtn.BackgroundColor3 = Settings.Triggerbot and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+end)
