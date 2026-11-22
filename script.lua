@@ -522,3 +522,89 @@ end
 
 for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end
 Players.PlayerAdded:Connect(CreateESP)
+-- ================= Fly Fix & Override =================
+-- これまでのフライ機能の設定をリセット
+if flyVelocity then flyVelocity:Destroy() end
+if downBtn then downBtn:Destroy() end
+if flySpeedCtrl then flySpeedCtrl:Destroy() end
+if flyHeightCtrl then flyHeightCtrl:Destroy() end
+if flyBtn then flyBtn:Destroy() end
+
+-- 画面の「Char」タブにある古いフライボタンをすべて削除
+for _, v in pairs(Pages.Char:GetChildren()) do
+    if v:IsA("TextButton") and string.find(v.Text, "Fly") then
+        v:Destroy()
+    end
+end
+
+Settings.Fly = false
+Settings.FlySpeed = 50
+
+-- 1. フライON/OFFボタン（1つだけ）
+local flyBtn = createBtn(Pages.Char, "Fly: OFF", 130, 95, Color3.fromRGB(200, 50, 50), 110)
+flyBtn.MouseButton1Click:Connect(function()
+    Settings.Fly = not Settings.Fly
+    flyBtn.Text = "Fly: " .. (Settings.Fly and "ON" or "OFF")
+    flyBtn.BackgroundColor3 = Settings.Fly and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+    if downBtn then downBtn.Visible = Settings.Fly end
+end)
+
+-- 2. 下に下がるボタン（画面右下に配置）
+local downBtn = Instance.new("TextButton")
+downBtn.Size = UDim2.new(0, 100, 0, 50)
+downBtn.Position = UDim2.new(1, -120, 1, -150)
+downBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+downBtn.BackgroundTransparency = 0.3
+downBtn.Text = "Down"
+downBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+downBtn.TextSize = 20
+downBtn.Font = Enum.Font.SourceSansBold
+downBtn.Visible = false
+downBtn.Parent = ScreenGui
+local downCorner = Instance.new("UICorner", downBtn)
+downCorner.CornerRadius = UDim.new(0, 8)
+
+-- 3. フライ処理（ジャンプで上昇、Downボタンで下降）
+local flyVelocity = nil
+local isJumping = false
+local isDownPressed = false
+
+UserInputService.JumpRequest:Connect(function()
+    if Settings.Fly then
+        isJumping = true
+        task.delay(0.1, function() isJumping = false end)
+    end
+end)
+
+downBtn.MouseButton1Down:Connect(function() isDownPressed = true end)
+downBtn.MouseButton1Up:Connect(function() isDownPressed = false end)
+downBtn.MouseButton1Click:Connect(function() isDownPressed = false end)
+
+RunService.Heartbeat:Connect(function()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hum or not hrp then return end
+
+    if Settings.Fly then
+        hum.PlatformStand = true
+        if not flyVelocity then
+            flyVelocity = Instance.new("BodyVelocity")
+            flyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+            flyVelocity.Velocity = Vector3.zero
+            flyVelocity.Parent = hrp
+        end
+
+        local targetVel = hum.MoveDirection * Settings.FlySpeed
+        if isJumping or UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            targetVel = targetVel + Vector3.new(0, 50, 0)
+        elseif isDownPressed or UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+            targetVel = targetVel - Vector3.new(0, 50, 0)
+        end
+        flyVelocity.Velocity = targetVel
+    else
+        if hum.PlatformStand then hum.PlatformStand = false end
+        if flyVelocity then flyVelocity:Destroy() flyVelocity = nil end
+    end
+end)
