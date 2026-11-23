@@ -20,7 +20,6 @@ ScreenGui.Name = "OreoHubUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = game:GetService("CoreGui")
 
--- メニュー開閉ボタン（左上）
 local ToggleMenuBtn = Instance.new("TextButton")
 ToggleMenuBtn.Size = UDim2.new(0, 80, 0, 35)
 ToggleMenuBtn.Position = UDim2.new(0, 10, 0, 10)
@@ -31,10 +30,10 @@ ToggleMenuBtn.Font = Enum.Font.SourceSansBold
 ToggleMenuBtn.TextSize = 14
 ToggleMenuBtn.Parent = ScreenGui
 
--- メインフレーム（画面中央に固定）
+-- メインフレーム（高さを少し抑えてスマホでも収まるように）
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 320, 0, 300)
-Frame.Position = UDim2.new(0.5, -160, 0.5, -150)
+Frame.Size = UDim2.new(0, 320, 0, 280)
+Frame.Position = UDim2.new(0.5, -160, 0.5, -140)
 Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 Frame.Active = true
 Frame.Visible = false
@@ -68,7 +67,6 @@ TitleRight.TextSize = 11
 TitleRight.TextXAlignment = Enum.TextXAlignment.Right
 TitleRight.Parent = Header
 
--- 時刻・FPS・Ping表示
 local frames = 0
 local lastTime = tick()
 local fps = 60
@@ -83,7 +81,6 @@ RunService.RenderStepped:Connect(function()
     TitleRight.Text = os.date("%m/%d %H:%M:%S") .. " | " .. fps .. " FPS | " .. ping .. "ms"
 end)
 
--- ドラッグ移動
 local dragging, dragInput, dragStart, startPos
 Frame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -107,10 +104,10 @@ end)
 
 ToggleMenuBtn.MouseButton1Click:Connect(function()
     Frame.Visible = not Frame.Visible
-    if Frame.Visible then Frame.Position = UDim2.new(0.5, -160, 0.5, -150) end
+    if Frame.Visible then Frame.Position = UDim2.new(0.5, -160, 0.5, -140) end
 end)
 
--- タブコンテナ
+-- タブ
 local TabContainer = Instance.new("Frame")
 TabContainer.Size = UDim2.new(1, 0, 0, 25)
 TabContainer.Position = UDim2.new(0, 0, 0, 30)
@@ -136,15 +133,18 @@ local setTabBtn = createTab("設定", 128, 64)
 local aimTabBtn = createTab("エイム", 192, 64)
 local secTabBtn = createTab("守り", 256, 64)
 
-local Content = Instance.new("Frame")
+-- スクロール可能なコンテンツエリア
+local Content = Instance.new("ScrollingFrame")
 Content.Size = UDim2.new(1, -10, 1, -65)
 Content.Position = UDim2.new(0, 5, 0, 60)
 Content.BackgroundTransparency = 1
+Content.ScrollBarThickness = 4
+Content.CanvasSize = UDim2.new(0, 0, 0, 250) -- 縦に長く設定
 Content.Parent = Frame
 
 local Pages = { ESP = Instance.new("Frame"), Char = Instance.new("Frame"), Settings = Instance.new("Frame"), Aim = Instance.new("Frame"), Security = Instance.new("Frame") }
 for _, page in pairs(Pages) do
-    page.Size = UDim2.new(1, 0, 1, 0)
+    page.Size = UDim2.new(1, -5, 0, 250)
     page.BackgroundTransparency = 1
     page.Visible = false
     page.Parent = Content
@@ -187,7 +187,7 @@ local function toggle(settingKey, btn, label)
     btn.BackgroundColor3 = Settings[settingKey] and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
 end
 
--- ================= ESP タブ =================
+-- ESPタブ
 local espMasterBtn = createBtn(Pages.ESP, "ESP: OFF", 0, 5, Color3.fromRGB(200, 50, 50))
 local espNameBtn = createBtn(Pages.ESP, "Name: OFF", 155, 5, Color3.fromRGB(200, 50, 50))
 local espHpBtn = createBtn(Pages.ESP, "Health: OFF", 0, 45, Color3.fromRGB(200, 50, 50))
@@ -198,7 +198,7 @@ espNameBtn.MouseButton1Click:Connect(function() toggle("ESP_Name", espNameBtn, "
 espHpBtn.MouseButton1Click:Connect(function() toggle("ESP_Health", espHpBtn, "Health") end)
 espDistBtn.MouseButton1Click:Connect(function() toggle("ESP_Distance", espDistBtn, "Distance") end)
 
--- ================= キャラクター タブ =================
+-- キャラクタータブ
 local infJumpBtn = createBtn(Pages.Char, "Inf Jump: OFF", 0, 5, Color3.fromRGB(200, 50, 50))
 local noclipBtn = createBtn(Pages.Char, "Noclip: OFF", 155, 5, Color3.fromRGB(200, 50, 50))
 local flyBtn = createBtn(Pages.Char, "Fly: OFF", 0, 45, Color3.fromRGB(200, 50, 50))
@@ -207,7 +207,7 @@ infJumpBtn.MouseButton1Click:Connect(function() toggle("InfJump", infJumpBtn, "I
 noclipBtn.MouseButton1Click:Connect(function() toggle("Noclip", noclipBtn, "Noclip") end)
 flyBtn.MouseButton1Click:Connect(function() toggle("Fly", flyBtn, "Fly") end)
 
--- スピード調整
+-- スピード
 local speedLabel = Instance.new("TextLabel")
 speedLabel.Size = UDim2.new(0, 150, 0, 20)
 speedLabel.Position = UDim2.new(0, 0, 0, 85)
@@ -226,7 +226,7 @@ speedToggleBtn.MouseButton1Click:Connect(function() toggle("SpeedHack", speedTog
 minusBtn.MouseButton1Click:Connect(function() Settings.SpeedValue = math.max(16, Settings.SpeedValue - 10); speedLabel.Text = "Speed: " .. Settings.SpeedValue end)
 plusBtn.MouseButton1Click:Connect(function() Settings.SpeedValue = math.min(300, Settings.SpeedValue + 10); speedLabel.Text = "Speed: " .. Settings.SpeedValue end)
 
--- フライ調整
+-- フライ設定
 local flyLabel = Instance.new("TextLabel")
 flyLabel.Size = UDim2.new(0, 150, 0, 20)
 flyLabel.Position = UDim2.new(0, 0, 0, 150)
@@ -243,27 +243,26 @@ local flyPlusBtn = createBtn(Pages.Char, "+", 150, 175, Color3.fromRGB(50, 200, 
 flyMinusBtn.MouseButton1Click:Connect(function() Settings.FlySpeed = math.max(10, Settings.FlySpeed - 10); flyLabel.Text = "Fly Speed: " .. Settings.FlySpeed end)
 flyPlusBtn.MouseButton1Click:Connect(function() Settings.FlySpeed = math.min(200, Settings.FlySpeed + 10); flyLabel.Text = "Fly Speed: " .. Settings.FlySpeed end)
 
--- 上昇・下降ボタン
+-- 上昇・下降
 local upBtn = createBtn(Pages.Char, "上昇", 45, 175, Color3.fromRGB(50, 150, 200), 45)
 local downBtn = createBtn(Pages.Char, "下降", 95, 175, Color3.fromRGB(200, 100, 50), 45)
 
 local isFlyingUp = false
 local isFlyingDown = false
-
 upBtn.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isFlyingUp = true end end)
 upBtn.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isFlyingUp = false end end)
 downBtn.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isFlyingDown = true end end)
 downBtn.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isFlyingDown = false end end)
 
--- ================= 設定 タブ =================
+-- 設定タブ
 local fpsBoostBtn = createBtn(Pages.Settings, "FPS Boost: OFF", 0, 5, Color3.fromRGB(200, 50, 50), 305)
 fpsBoostBtn.MouseButton1Click:Connect(function() toggle("FPSBoost", fpsBoostBtn, "FPS Boost") end)
 
--- ================= エイム タブ =================
+-- エイムタブ
 local aimbotBtn = createBtn(Pages.Aim, "Aimbot: OFF", 0, 5, Color3.fromRGB(200, 50, 50), 305)
 aimbotBtn.MouseButton1Click:Connect(function() toggle("Aimbot", aimbotBtn, "Aimbot") end)
 
--- ================= 守り タブ =================
+-- 守りタブ
 local antiAfkBtn = createBtn(Pages.Security, "Anti AFK: OFF", 0, 5, Color3.fromRGB(200, 50, 50))
 local antiLagBtn = createBtn(Pages.Security, "Anti Lag: OFF", 155, 5, Color3.fromRGB(200, 50, 50))
 local antiFlingBtn = createBtn(Pages.Security, "Anti Fling: OFF", 0, 45, Color3.fromRGB(200, 50, 50))
@@ -274,7 +273,7 @@ antiLagBtn.MouseButton1Click:Connect(function() toggle("AntiLag", antiLagBtn, "A
 antiFlingBtn.MouseButton1Click:Connect(function() toggle("AntiFling", antiFlingBtn, "Anti Fling") end)
 antiTpBtn.MouseButton1Click:Connect(function() toggle("AntiTP", antiTpBtn, "Anti TP") end)
 
--- ================= 処理：キャラクター =================
+-- ================= 処理群 =================
 RunService.Heartbeat:Connect(function()
     local char = LocalPlayer.Character
     if not char then return end
@@ -282,7 +281,6 @@ RunService.Heartbeat:Connect(function()
     local hrp = char:FindFirstChild("HumanoidRootPart")
 
     if hum and hrp then
-        -- スピード
         if Settings.SpeedHack then
             hum.WalkSpeed = Settings.SpeedValue
             if hum.MoveDirection.Magnitude > 0 then
@@ -292,7 +290,6 @@ RunService.Heartbeat:Connect(function()
             hum.WalkSpeed = 16
         end
 
-        -- フライ
         if Settings.Fly then
             hum.PlatformStand = true
             if not hrp:FindFirstChild("FlyVelocity") then
@@ -305,7 +302,6 @@ RunService.Heartbeat:Connect(function()
             local bv = hrp:FindFirstChild("FlyVelocity")
             if bv then
                 local targetVel = hum.MoveDirection * Settings.FlySpeed
-                -- ボタン、またはキーボード操作
                 if isFlyingUp or UserInputService:IsKeyDown(Enum.KeyCode.Space) then targetVel = targetVel + Vector3.new(0, Settings.FlySpeed, 0) 
                 elseif isFlyingDown or UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then targetVel = targetVel - Vector3.new(0, Settings.FlySpeed, 0) end
                 bv.Velocity = targetVel
@@ -316,7 +312,6 @@ RunService.Heartbeat:Connect(function()
         end
     end
 
-    -- ノークリップ
     if Settings.Noclip then
         for _, v in pairs(char:GetDescendants()) do
             if v:IsA("BasePart") and v.CanCollide then v.CanCollide = false end
@@ -331,14 +326,9 @@ UserInputService.JumpRequest:Connect(function()
     end
 end)
 
--- ================= 処理：エイム =================
 local isShooting = false
-UserInputService.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isShooting = true end
-end)
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isShooting = false end
-end)
+UserInputService.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isShooting = true end end)
+UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isShooting = false end end)
 
 RunService.RenderStepped:Connect(function()
     if Settings.Aimbot and isShooting then
@@ -360,13 +350,10 @@ RunService.RenderStepped:Connect(function()
                 end
             end
         end
-        if closestHead then
-            Camera.CFrame = Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position, closestHead.Position), 0.5)
-        end
+        if closestHead then Camera.CFrame = Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position, closestHead.Position), 0.5) end
     end
 end)
 
--- ================= 処理：守り =================
 LocalPlayer.Idled:Connect(function()
     if Settings.AntiAFK then
         VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
@@ -381,73 +368,41 @@ RunService.Heartbeat:Connect(function()
     if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
-
     if Settings.AntiTP then
         if not lastPos then lastPos = hrp.Position
         else
             local dist = (hrp.Position - lastPos).Magnitude
-            if dist > 30 then hrp.CFrame = CFrame.new(lastPos); hrp.AssemblyLinearVelocity = Vector3.new(0,0,0)
-            else lastPos = hrp.Position end
+            if dist > 30 then hrp.CFrame = CFrame.new(lastPos); hrp.AssemblyLinearVelocity = Vector3.new(0,0,0) else lastPos = hrp.Position end
         end
     else lastPos = nil end
-
-    if Settings.AntiFling and hrp.AssemblyAngularVelocity.Magnitude > 50 then
-        hrp.AssemblyAngularVelocity = Vector3.new(0,0,0)
-    end
+    if Settings.AntiFling and hrp.AssemblyAngularVelocity.Magnitude > 50 then hrp.AssemblyAngularVelocity = Vector3.new(0,0,0) end
 end)
 
--- ================= 処理：ESP =================
 local ESPFolder = Instance.new("Folder")
 ESPFolder.Name = "OreoESP"
 ESPFolder.Parent = game:GetService("CoreGui")
 
-local function IsTeammate(player)
-    if LocalPlayer.Team == nil then return false end
-    return player.Team == LocalPlayer.Team
-end
+local function IsTeammate(player) if LocalPlayer.Team == nil then return false end; return player.Team == LocalPlayer.Team end
 
 local function CreateESP(player)
     if player == LocalPlayer or IsTeammate(player) then return end
-    
     local function onChar(char)
         local head = char:WaitForChild("Head", 5)
         if not head then return end
         if ESPFolder:FindFirstChild(player.Name) then ESPFolder[player.Name]:Destroy() end
-
-        local bg = Instance.new("BillboardGui")
-        bg.Name = player.Name
-        bg.Adornee = head
-        bg.Size = UDim2.new(0, 200, 0, 50)
-        bg.StudsOffset = Vector3.new(0, 2.5, 0)
-        bg.AlwaysOnTop = true
-        bg.Parent = ESPFolder
-
-        local text = Instance.new("TextLabel")
-        text.Size = UDim2.new(1, 0, 1, 0)
-        text.BackgroundTransparency = 1
-        text.TextColor3 = Color3.fromRGB(255, 255, 255)
-        text.Font = Enum.Font.SourceSansBold
-        text.TextSize = 14
-        text.TextStrokeTransparency = 0
-        text.RichText = true
-        text.Parent = bg
-
+        local bg = Instance.new("BillboardGui"); bg.Name = player.Name; bg.Adornee = head; bg.Size = UDim2.new(0, 200, 0, 50); bg.StudsOffset = Vector3.new(0, 2.5, 0); bg.AlwaysOnTop = true; bg.Parent = ESPFolder
+        local text = Instance.new("TextLabel"); text.Size = UDim2.new(1, 0, 1, 0); text.BackgroundTransparency = 1; text.TextColor3 = Color3.fromRGB(255, 255, 255); text.Font = Enum.Font.SourceSansBold; text.TextSize = 14; text.TextStrokeTransparency = 0; text.RichText = true; text.Parent = bg
         task.spawn(function()
             while bg.Parent do
                 if Settings.ESP and char.Parent and char:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
                     local dist = math.floor((LocalPlayer.Character.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude)
                     local hum = char:FindFirstChildOfClass("Humanoid")
-                    
                     local display = ""
                     if Settings.ESP_Name then display = display .. player.Name .. "\n" end
                     if Settings.ESP_Health and hum then display = display .. "<font color='#32CD32'>HP: " .. math.floor(hum.Health) .. "</font>\n" end
                     if Settings.ESP_Distance then display = display .. "<font color='#32CD32'>[" .. dist .. "m]</font>" end
-                    
-                    text.Text = display
-                    bg.Enabled = true
-                else
-                    bg.Enabled = false
-                end
+                    text.Text = display; bg.Enabled = true
+                else bg.Enabled = false end
                 task.wait(0.2)
             end
         end)
@@ -455,6 +410,5 @@ local function CreateESP(player)
     if player.Character then onChar(player.Character) end
     player.CharacterAdded:Connect(onChar)
 end
-
 for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end
 Players.PlayerAdded:Connect(CreateESP)
