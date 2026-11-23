@@ -1531,3 +1531,21 @@ end
 if Frame then
     Frame.Position = UDim2.new(0.5, -Frame.AbsoluteSize.X / 2, 0.5, -Frame.AbsoluteSize.Y / 2)
 end
+-- ================= UIを画面中央に完全固定 =================
+if Frame then
+    -- 画面の幅と高さを取得
+    local viewportX = workspace.CurrentCamera.ViewportSize.X
+    local viewportY = workspace.CurrentCamera.ViewportSize.Y
+    
+    -- 中央に配置するための計算 (フレームの幅200、高さは今のサイズ)
+    local frameWidth = 460
+    local frameHeight = Frame.AbsoluteSize.Y
+    
+    -- 位置をド真ん中に設定
+    Frame.Position = UDim2.new(0.5, -frameWidth / 2, 0.5, -frameHeight / 2)
+    
+    -- もしメニュー開閉ボタン（Closeボタン）も中央に寄せたい場合
+    if ToggleButton then
+        ToggleButton.Position = UDim2.new(0.5, -40, 0.5, -frameHeight / 2 - 40)
+    end
+end
