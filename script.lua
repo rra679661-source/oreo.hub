@@ -1494,3 +1494,36 @@ task.spawn(function()
         end
     end
 end)
+if Settings then
+    Settings.Triggerbot = false
+    Settings.TrueSilentAim = false
+end
+
+if ScreenGui then
+    for _, v in pairs(ScreenGui:GetDescendants()) do
+        if v:IsA("TextButton") then
+            if string.find(v.Text, "Triggerbot") or string.find(v.Text, "Silent Aim") or string.find(v.Text, "Camera Lock") or string.find(v.Text, "TP to Enemy") or string.find(v.Text, "Teleport") then
+                v:Destroy()
+            end
+        end
+    end
+end
+
+if Pages then
+    for pageName, page in pairs(Pages) do
+        for _, v in pairs(page:GetDescendants()) do
+            if v:IsA("TextButton") then
+                if string.find(v.Text, "Triggerbot") or string.find(v.Text, "Silent Aim") or string.find(v.Text, "TP to Enemy") then
+                    v:Destroy()
+                end
+            end
+        end
+    end
+end
+
+if combatTabBtn then
+    combatTabBtn:Destroy()
+end
+if Pages and Pages.Combat then
+    Pages.Combat:Destroy()
+end
