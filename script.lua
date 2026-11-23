@@ -1527,3 +1527,7 @@ end
 if Pages and Pages.Combat then
     Pages.Combat:Destroy()
 end
+-- UIを画面中央に強制移動
+if Frame then
+    Frame.Position = UDim2.new(0.5, -Frame.AbsoluteSize.X / 2, 0.5, -Frame.AbsoluteSize.Y / 2)
+end
