@@ -412,3 +412,61 @@ local function CreateESP(player)
 end
 for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end
 Players.PlayerAdded:Connect(CreateESP)
+-- ================= Rapid Fire (2x) =================
+local rapidFireEnabled = false
+
+-- 既存のエイムタブを探す
+local aimPage = Pages and Pages.Aim
+if aimPage then
+    -- 既存のRapid Fireボタンがあれば消す
+    for _, v in pairs(aimPage:GetChildren()) do
+        if v:IsA("TextButton") and string.find(v.Text, "Rapid Fire") then
+            v:Destroy()
+        end
+    end
+
+    -- ボタン作成
+    local rapidBtn = Instance.new("TextButton")
+    rapidBtn.Size = UDim2.new(0, 305, 0, 35)
+    rapidBtn.Position = UDim2.new(0, 0, 0, 45) -- エイムボットの下
+    rapidBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    rapidBtn.Text = "Rapid Fire (2x): OFF"
+    rapidBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    rapidBtn.Font = Enum.Font.SourceSansBold
+    rapidBtn.TextSize = 14
+    rapidBtn.Parent = aimPage
+
+    rapidBtn.MouseButton1Click:Connect(function()
+        rapidFireEnabled = not rapidFireEnabled
+        rapidBtn.Text = "Rapid Fire (2x): " .. (rapidFireEnabled and "ON" or "OFF")
+        rapidBtn.BackgroundColor3 = rapidFireEnabled and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+    end)
+
+    -- 連射処理ループ
+    task.spawn(function()
+        while task.wait(0.05) do -- 0.05秒ごとにチェック
+            if rapidFireEnabled then
+                local char = LocalPlayer.Character
+                if char then
+                    local tool = char:FindFirstChildOfClass("Tool")
+                    if tool then
+                        -- ツールのアクティベートを連打（デバウンス無視を狙う）
+                        pcall(function() tool:Activate() end)
+                        -- サーバーへ送るリモートを直接叩く試み
+                        for _, v in pairs(tool:GetDescendants()) do
+                            if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
+                                pcall(function()
+                                    if v:IsA("RemoteEvent") then
+                                        v:FireServer()
+                                    else
+                                        v:InvokeServer()
+                                    end
+                                end)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+end
