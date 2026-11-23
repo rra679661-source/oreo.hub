@@ -594,3 +594,92 @@ task.spawn(function()
         end
     end
 end)
+-- ================= Fast Knife (Hook方式 & 長押し対応) =================
+
+-- ツール内の関数をフックするための準備
+local isHoldingKnifeBtn = false
+local hookedTools = {}
+
+-- 長押し判定用ボタンの作成
+if Pages and Pages.Aim then
+    for _, v in pairs(Pages.Aim:GetChildren()) do
+        if v:IsA("TextButton") and string.find(v.Text, "Fast Knife") then
+            v:Destroy()
+        end
+    end
+
+    local knifeBtn = Instance.new("TextButton")
+    knifeBtn.Size = UDim2.new(0, 305, 0, 35)
+    knifeBtn.Position = UDim2.new(0, 0, 0, 85) 
+    knifeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    knifeBtn.Text = "Fast Knife (Hold): OFF"
+    knifeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    knifeBtn.Font = Enum.Font.SourceSansBold
+    knifeBtn.TextSize = 14
+    knifeBtn.Parent = Pages.Aim
+
+    -- 長押し開始
+    knifeBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isHoldingKnifeBtn = true
+            knifeBtn.Text = "Fast Knife (Hold): ON"
+            knifeBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+        end
+    end)
+
+    -- 長押し終了
+    knifeBtn.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isHoldingKnifeBtn = false
+            knifeBtn.Text = "Fast Knife (Hold): OFF"
+            knifeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        end
+    end)
+end
+
+-- ツールの関数をフックする処理（クールダウン無視）
+local function HookTool(tool)
+    if hookedTools[tool] then return end
+    hookedTools[tool] = true
+
+    -- ツール内のスクリプトやLocalScriptを探す
+    for _, obj in pairs(tool:GetDescendants()) do
+        if obj:IsA("LocalScript") or obj:IsA("Script") then
+            -- スクリプト内の関数をフックするのは複雑なため、
+            -- ここではツールの子要素にある「Cooldown」などの数値を0にする処理を常時行う
+            -- （これが実質的なフック指名の代わりになります）
+        end
+    end
+end
+
+-- 長押し中の超高速発動ループ
+task.spawn(function()
+    while task.wait() do
+        if isHoldingKnifeBtn then
+            local char = LocalPlayer.Character
+            if char then
+                local tool = char:FindFirstChildOfClass("Tool")
+                if tool and (string.find(tool.Name, "Knife") or string.find(tool.Name, "Sword") or string.find(tool.Name, "Katana")) then
+                    HookTool(tool)
+                    
+                    -- ツールのクールダウン数値を書き換え
+                    for _, obj in pairs(tool:GetDescendants()) do
+                        if obj:IsA("NumberValue") and (string.find(obj.Name, "Cooldown") or string.find(obj.Name, "Delay") or string.find(obj.Name, "Time")) then
+                            obj.Value = 0
+                        end
+                    end
+
+                    -- アクティベートを連打（振る動作）
+                    pcall(function() tool:Activate() end)
+                    
+                    -- リモートイベントを直接叩く
+                    for _, obj in pairs(tool:GetDescendants()) do
+                        if obj:IsA("RemoteEvent") then
+                            pcall(function() obj:FireServer() end)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
