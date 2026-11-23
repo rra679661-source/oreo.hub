@@ -542,3 +542,55 @@ task.spawn(function()
         end
     end
 end)
+-- ================= Fast Knife (高速振り) =================
+local fastKnifeEnabled = false
+
+if Pages and Pages.Aim then
+    -- 既存のFast Knifeボタンを消去
+    for _, v in pairs(Pages.Aim:GetChildren()) do
+        if v:IsA("TextButton") and string.find(v.Text, "Fast Knife") then
+            v:Destroy()
+        end
+    end
+
+    -- 新しいボタンの配置
+    local knifeBtn = Instance.new("TextButton")
+    knifeBtn.Size = UDim2.new(0, 305, 0, 35)
+    knifeBtn.Position = UDim2.new(0, 0, 0, 85) -- Rapid Fireの下
+    knifeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    knifeBtn.Text = "Fast Knife: OFF"
+    knifeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    knifeBtn.Font = Enum.Font.SourceSansBold
+    knifeBtn.TextSize = 14
+    knifeBtn.Parent = Pages.Aim
+
+    knifeBtn.MouseButton1Click:Connect(function()
+        fastKnifeEnabled = not fastKnifeEnabled
+        knifeBtn.Text = "Fast Knife: " .. (fastKnifeEnabled and "ON" or "OFF")
+        knifeBtn.BackgroundColor3 = fastKnifeEnabled and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+    end)
+end
+
+-- 高速振りループ処理
+task.spawn(function()
+    while task.wait(0.01) do -- 1秒間に100回の超高速ループ
+        if fastKnifeEnabled then
+            local char = LocalPlayer.Character
+            if char then
+                local tool = char:FindFirstChildOfClass("Tool")
+                -- 装備している武器がナイフや近接武器（Melee）かどうかの判定
+                if tool and (string.find(tool.Name, "Knife") or string.find(tool.Name, "Sword") or string.find(tool.Name, "Katana") or string.find(tool.Name, "Melee")) then
+                    -- ツールの発動（振る動作）
+                    pcall(function() tool:Activate() end)
+                    
+                    -- 内部のリモートイベントを直接叩く（サーバーへの攻撃リクエスト）
+                    for _, obj in pairs(tool:GetDescendants()) do
+                        if obj:IsA("RemoteEvent") then
+                            pcall(function() obj:FireServer() end)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
