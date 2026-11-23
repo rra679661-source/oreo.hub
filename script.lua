@@ -732,3 +732,22 @@ if Pages and Pages.Settings then
         end
     end)
 end
+-- ================= エイムタブの完全初期化 =================
+
+if Pages and Pages.Aim then
+    for _, v in pairs(Pages.Aim:GetChildren()) do
+        if v:IsA("TextButton") or v:IsA("TextLabel") then
+            v:Destroy()
+        end
+    end
+    
+    -- 必要なら「準備中」というテキストだけ置いておく
+    local emptyLabel = Instance.new("TextLabel")
+    emptyLabel.Size = UDim2.new(1, 0, 1, 0)
+    emptyLabel.BackgroundTransparency = 1
+    emptyLabel.Text = "準備中..."
+    emptyLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+    emptyLabel.Font = Enum.Font.SourceSansBold
+    emptyLabel.TextSize = 16
+    emptyLabel.Parent = Pages.Aim
+end
