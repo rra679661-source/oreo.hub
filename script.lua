@@ -683,3 +683,52 @@ task.spawn(function()
         end
     end
 end)
+-- ================= スキンチェンジャー（URL読み込み型） =================
+
+if Pages and Pages.Settings then
+    -- 既存のスキンチェンジャーボタンがあれば消去
+    for _, v in pairs(Pages.Settings:GetChildren()) do
+        if v:IsA("TextButton") and string.find(v.Text, "Skin") then
+            v:Destroy()
+        end
+    end
+
+    -- スキンチェンジャー用のボタン
+    local skinBtn = Instance.new("TextButton")
+    skinBtn.Size = UDim2.new(0, 305, 0, 35)
+    skinBtn.Position = UDim2.new(0, 0, 0, 45) -- FPS Boostの下
+    skinBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 200)
+    skinBtn.Text = "Unlock All Skins (Apply)"
+    skinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    skinBtn.Font = Enum.Font.SourceSansBold
+    skinBtn.TextSize = 14
+    skinBtn.Parent = Pages.Settings
+
+    -- ボタンを押した時の処理
+    skinBtn.MouseButton1Click:Connect(function()
+        skinBtn.Text = "Applying..."
+        
+        -- もらってきた構文をURLから読み込んで実行
+        local success, err = pcall(function()
+            loadstring(game:HttpGet("https://pastefy.app/G0WRoaUP/raw"))()
+        end)
+
+        if success then
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Skin Changer";
+                Text = "スキンのアンロックと適用が完了しました！";
+                Duration = 5;
+            })
+            skinBtn.Text = "Unlock All Skins (Applied)"
+            skinBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Skin Changer Error";
+                Text = "読み込みに失敗しました。ゲーム内にいるか確認してください。";
+                Duration = 5;
+            })
+            skinBtn.Text = "Unlock All Skins (Error)"
+            skinBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        end
+    end)
+end
