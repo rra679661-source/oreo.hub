@@ -470,3 +470,75 @@ if aimPage then
         end
     end)
 end
+-- ================= Rapid Fire (Super Fix) =================
+rapidFireEnabled = false
+
+-- 古いRapid Fireボタンを消す
+if Pages and Pages.Aim then
+    for _, v in pairs(Pages.Aim:GetChildren()) do
+        if v:IsA("TextButton") and string.find(v.Text, "Rapid Fire") then
+            v:Destroy()
+        end
+    end
+
+    local rapidBtn = Instance.new("TextButton")
+    rapidBtn.Size = UDim2.new(0, 305, 0, 35)
+    rapidBtn.Position = UDim2.new(0, 0, 0, 45) 
+    rapidBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    rapidBtn.Text = "Rapid Fire (2x): OFF"
+    rapidBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    rapidBtn.Font = Enum.Font.SourceSansBold
+    rapidBtn.TextSize = 14
+    rapidBtn.Parent = Pages.Aim
+
+    rapidBtn.MouseButton1Click:Connect(function()
+        rapidFireEnabled = not rapidFireEnabled
+        rapidBtn.Text = "Rapid Fire (2x): " .. (rapidFireEnabled and "ON" or "OFF")
+        rapidBtn.BackgroundColor3 = rapidFireEnabled and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+    end)
+end
+
+-- 内部スクリプトの数値を書き換えるループ
+task.spawn(function()
+    while task.wait(0.5) do -- 0.5秒ごとに装備をチェック
+        if rapidFireEnabled then
+            local char = LocalPlayer.Character
+            if char then
+                local tool = char:FindFirstChildOfClass("Tool")
+                if tool then
+                    -- ツール内のスクリプトを探して、連射速度に関係する数値を強制的に書き換える
+                    for _, obj in pairs(tool:GetDescendants()) do
+                        -- スクリプト内の特定の数値を上書き
+                        if obj:IsA("NumberValue") then
+                            if string.find(obj.Name, "Cooldown") or string.find(obj.Name, "FireRate") or string.find(obj.Name, "Delay") or string.find(obj.Name, "Speed") then
+                                obj.Value = 0.01 -- 極限まで短くする
+                            end
+                        end
+                        
+                        -- 発射用リモートイベントの名前を探して連打する
+                        if obj:IsA("RemoteEvent") and (string.find(obj.Name, "Fire") or string.find(obj.Name, "Shoot") or string.find(obj.Name, "Attack")) then
+                            pcall(function()
+                                obj:FireServer()
+                            end)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- 超高速連打（0.02秒ごと）
+task.spawn(function()
+    while task.wait(0.02) do
+        if rapidFireEnabled then
+            local char = LocalPlayer.Character
+            if char then
+                local tool = char:FindFirstChildOfClass("Tool")
+                if tool then
+                    pcall(function() tool:Activate() end)
+                end
+            end
+        end
+    end
+end)
