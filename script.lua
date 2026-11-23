@@ -1549,3 +1549,17 @@ if Frame then
         ToggleButton.Position = UDim2.new(0.5, -40, 0.5, -frameHeight / 2 - 40)
     end
 end
+-- ================= スマホ用：UIを画面中央に完全固定 =================
+if Frame then
+    -- スマホの画面幅に合わせてメニューのサイズを調整（幅90%、高さは画面の70%）
+    Frame.Size = UDim2.new(0.9, 0, 0.7, 0)
+    
+    -- 画面のド真ん中に配置する
+    Frame.Position = UDim2.new(0.05, 0, 0.15, 0)
+    
+    -- 中身（タブやボタン）が枠からはみ出さないように整列させる
+    if Content then
+        Content.Size = UDim2.new(1, -20, 1, -70)
+        Content.Position = UDim2.new(0, 10, 0, 65)
+    end
+end
