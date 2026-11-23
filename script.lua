@@ -1419,3 +1419,78 @@ task.spawn(function()
         end
     end
 end)
+-- ================= Silent Aim (True) & UI Fix =================
+Settings.TrueSilentAim = false
+
+-- 既存の「Silent Aim (Soon)」ボタンを探して、機能するボタンに書き換える
+local silentAimBtn
+for _, obj in pairs(Pages.Aim:GetDescendants()) do
+    if obj:IsA("TextButton") and string.find(obj.Text, "Silent Aim") then
+        silentAimBtn = obj
+        break
+    end
+end
+
+if silentAimBtn then
+    -- ボタンの見た目とテキストを初期化
+    silentAimBtn.Text = "Silent Aim: OFF"
+    silentAimBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    silentAimBtn.Active = true
+    silentAimBtn.AutoButtonColor = true
+    
+    -- ボタンを押した時の処理
+    silentAimBtn.MouseButton1Click:Connect(function()
+        Settings.TrueSilentAim = not Settings.TrueSilentAim
+        silentAimBtn.Text = "Silent Aim: " .. (Settings.TrueSilentAim and "ON" or "OFF")
+        silentAimBtn.BackgroundColor3 = Settings.TrueSilentAim and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+    end)
+end
+
+-- 画面中央から一番近い敵の頭を取得する関数
+local function GetSilentTarget()
+    local closest = nil
+    local shortest = 500
+    local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            local hum = p.Character:FindFirstChildOfClass("Humanoid")
+            local head = p.Character:FindFirstChild("Head")
+            if hum and hum.Health > 0 and head then
+                if LocalPlayer.Team == nil or p.Team ~= LocalPlayer.Team then
+                    local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
+                    if onScreen then
+                        local dist = (center - Vector2.new(pos.X, pos.Y)).Magnitude
+                        if dist < shortest then
+                            shortest = dist
+                            closest = head
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return closest
+end
+
+-- 弾を敵の頭に強制テレポートさせるループ
+task.spawn(function()
+    while task.wait(0.01) do
+        if Settings.TrueSilentAim then
+            local targetHead = GetSilentTarget()
+            if targetHead then
+                for _, obj in pairs(workspace:GetDescendants()) do
+                    if obj:IsA("BasePart") then
+                        if obj.Size.Magnitude < 2 and obj.CanCollide == false and obj.Transparency < 1 then
+                            local distToMe = (obj.Position - Camera.CFrame.Position).Magnitude
+                            if distToMe < 100 then 
+                                obj.CFrame = CFrame.new(targetHead.Position)
+                                obj.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
