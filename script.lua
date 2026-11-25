@@ -1035,3 +1035,178 @@ if Pages and Pages.Settings then
     clearBtn.Parent = Pages.Settings
     clearBtn.MouseButton1Click:Connect(function() ChangeWeather("None") end)
 end
+-- ================= 弾道トレーサー（永遠表示）＆天気修正 =================
+
+-- 1. トレーサー設定
+local TracerEnabled = false
+
+if Pages and Pages.ESP then
+    for _, v in pairs(Pages.ESP:GetChildren()) do
+        if v:IsA("TextButton") and string.find(v.Text, "Tracer") then v:Destroy() end
+    end
+
+    local tracerBtn = Instance.new("TextButton")
+    tracerBtn.Size = UDim2.new(0, 305, 0, 35)
+    tracerBtn.Position = UDim2.new(0, 0, 0, 90)
+    tracerBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    tracerBtn.Text = "Permanent Tracer: OFF"
+    tracerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tracerBtn.Font = Enum.Font.SourceSansBold
+    tracerBtn.Parent = Pages.ESP
+
+    tracerBtn.MouseButton1Click:Connect(function()
+        TracerEnabled = not TracerEnabled
+        tracerBtn.Text = "Permanent Tracer: " .. (TracerEnabled and "ON" or "OFF")
+        tracerBtn.BackgroundColor3 = TracerEnabled and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+        
+        -- OFFにしたら画面の線を全部消す
+        if not TracerEnabled and DrawingsFolder then
+            for _, v in pairs(DrawingsFolder:GetChildren()) do v:Remove() end
+        end
+    end)
+end
+
+local DrawingsFolder = Instance.new("Folder")
+DrawingsFolder.Name = "TracerFolder"
+DrawingsFolder.Parent = game:GetService("CoreGui")
+
+-- 弾（パーツ）が生成された瞬間を検知
+workspace.DescendantAdded:Connect(function(obj)
+    if TracerEnabled and obj:IsA("BasePart") then
+        -- 弾っぽい条件（小さい、当たり判定なし、透明でない）
+        if obj.Size.Magnitude < 3 and obj.CanCollide == false and obj.Transparency < 1 then
+            
+            -- 弾が生成された瞬間の座標（スタート地点）
+            local startPos = obj.Position
+            
+            -- 弾の寿命が尽きるまで（または一定時間）追跡して、最後の座標を取得
+            task.spawn(function()
+                local endPos = startPos
+                local timeAlive = 0
+                
+                -- 最大3秒間追跡
+                while obj.Parent and timeAlive < 3 do
+                    endPos = obj.Position
+                    task.wait(0.02)
+                    timeAlive = timeAlive + 0.02
+                end
+
+                -- 永遠に残る線を描画
+                local tracer = Drawing.new("Line")
+                tracer.Thickness = 2
+                tracer.Color = Color3.fromRGB(0, 255, 255) -- シアン色
+                tracer.Transparency = 1
+                
+                -- スタート地点と着弾地点を画面座標に変換
+                local startScreen, startOnScreen = Camera:WorldToViewportPoint(startPos)
+                local endScreen, endOnScreen = Camera:WorldToViewportPoint(endPos)
+
+                if startOnScreen and endOnScreen then
+                    tracer.From = Vector2.new(startScreen.X, startScreen.Y)
+                    tracer.To = Vector2.new(endScreen.X, endScreen.Y)
+                    tracer.Visible = true
+                    tracer.Parent = DrawingsFolder -- ※DrawingにはParentの概念がないため、下の描画ループで管理します
+                    
+                    -- 3D空間上の線として描画を維持するため、毎フレーム座標を更新する
+                    local renderConn
+                    renderConn = RunService.RenderStepped:Connect(function()
+                        if not TracerEnabled then
+                            tracer:Remove()
+                            renderConn:Disconnect()
+                            return
+                        end
+                        
+                        local sPos, sOn = Camera:WorldToViewportPoint(startPos)
+                        local ePos, eOn = Camera:WorldToViewportPoint(endPos)
+                        
+                        if sOn and eOn then
+                            tracer.From = Vector2.new(sPos.X, sPos.Y)
+                            tracer.To = Vector2.new(ePos.X, ePos.Y)
+                            tracer.Visible = true
+                        else
+                            tracer.Visible = false
+                        end
+                    end)
+                end
+            end)
+        end
+    end
+end)
+
+-- 2. 天気の修正
+local WeatherFolder = workspace:FindFirstChild("OreoWeather")
+if not WeatherFolder then
+    WeatherFolder = Instance.new("Folder")
+    WeatherFolder.Name = "OreoWeather"
+    WeatherFolder.Parent = workspace
+end
+
+local function ChangeWeather(weatherType)
+    for _, v in pairs(WeatherFolder:GetChildren()) do v:Destroy() end
+    if weatherType == "None" then return end
+
+    local emitter = Instance.new("ParticleEmitter")
+    -- 確実に表示される標準の白い四角のテクスチャを使用
+    emitter.Texture = "rbxassetid://243660364" 
+    emitter.Rate = 200
+    emitter.Lifetime = NumberRange.new(2, 3)
+    emitter.Speed = NumberRange.new(30, 50)
+    emitter.SpreadAngle = Vector2.new(30, 30)
+    
+    if weatherType == "Rain" then
+        emitter.Color = ColorSequence.new(Color3.fromRGB(100, 150, 255))
+        emitter.Size = NumberSequence.new(0.2, 0.2)
+        emitter.Transparency = NumberSequence.new(0.2, 0.2)
+        emitter.Acceleration = Vector3.new(0, -100, 0)
+    elseif weatherType == "Snow" then
+        emitter.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255))
+        emitter.Size = NumberSequence.new(0.8, 0.8)
+        emitter.Transparency = NumberSequence.new(0.1, 0.1)
+        emitter.Acceleration = Vector3.new(0, -15, 0)
+    end
+
+    -- 自分の頭の上から降らせる
+    local attachment = Instance.new("Attachment")
+    attachment.Parent = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or Camera
+    
+    emitter.Parent = attachment
+end
+
+-- 設定タブに天気ボタンを再配置
+if Pages and Pages.Settings then
+    for _, v in pairs(Pages.Settings:GetChildren()) do
+        if v:IsA("TextButton") and (string.find(v.Text, "雨") or string.find(v.Text, "雪") or string.find(v.Text, "快晴")) then
+            v:Destroy()
+        end
+    end
+
+    local rainBtn = Instance.new("TextButton")
+    rainBtn.Size = UDim2.new(0, 70, 0, 25)
+    rainBtn.Position = UDim2.new(0, 0, 0, 215)
+    rainBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 200)
+    rainBtn.Text = "雨"
+    rainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    rainBtn.Font = Enum.Font.SourceSansBold
+    rainBtn.Parent = Pages.Settings
+    rainBtn.MouseButton1Click:Connect(function() ChangeWeather("Rain") end)
+
+    local snowBtn = Instance.new("TextButton")
+    snowBtn.Size = UDim2.new(0, 70, 0, 25)
+    snowBtn.Position = UDim2.new(0, 80, 0, 215)
+    snowBtn.BackgroundColor3 = Color3.fromRGB(200, 200, 255)
+    snowBtn.Text = "雪"
+    snowBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+    snowBtn.Font = Enum.Font.SourceSansBold
+    snowBtn.Parent = Pages.Settings
+    snowBtn.MouseButton1Click:Connect(function() ChangeWeather("Snow") end)
+
+    local clearBtn = Instance.new("TextButton")
+    clearBtn.Size = UDim2.new(0, 70, 0, 25)
+    clearBtn.Position = UDim2.new(0, 160, 0, 215)
+    clearBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    clearBtn.Text = "快晴"
+    clearBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    clearBtn.Font = Enum.Font.SourceSansBold
+    clearBtn.Parent = Pages.Settings
+    clearBtn.MouseButton1Click:Connect(function() ChangeWeather("None") end)
+end
