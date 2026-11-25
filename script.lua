@@ -751,3 +751,94 @@ if Pages and Pages.Aim then
     emptyLabel.TextSize = 16
     emptyLabel.Parent = Pages.Aim
 end
+-- ================= 弾道トレーサー (Tracer) =================
+
+local TracerSettings = {
+    Enabled = false,
+    Color = Color3.fromRGB(0, 255, 255), -- シアン色（キースナイパー風）
+    Lifetime = 0.5 -- 線が消えるまでの時間（秒）
+}
+
+-- ESPタブにボタンを追加
+if Pages and Pages.ESP then
+    -- 既存のTracerボタンを探して消す
+    for _, v in pairs(Pages.ESP:GetChildren()) do
+        if v:IsA("TextButton") and string.find(v.Text, "Tracer") then
+            v:Destroy()
+        end
+    end
+
+    local tracerBtn = Instance.new("TextButton")
+    tracerBtn.Size = UDim2.new(0, 305, 0, 35)
+    tracerBtn.Position = UDim2.new(0, 0, 0, 90) -- 既存のESPボタンの下
+    tracerBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    tracerBtn.Text = "Bullet Tracer: OFF"
+    tracerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tracerBtn.Font = Enum.Font.SourceSansBold
+    tracerBtn.TextSize = 14
+    tracerBtn.Parent = Pages.ESP
+
+    tracerBtn.MouseButton1Click:Connect(function()
+        TracerSettings.Enabled = not TracerSettings.Enabled
+        tracerBtn.Text = "Bullet Tracer: " .. (TracerSettings.Enabled and "ON" or "OFF")
+        tracerBtn.BackgroundColor3 = TracerSettings.Enabled and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+    end)
+end
+
+-- 弾の検知と描画処理
+local DrawingsFolder = Instance.new("Folder")
+DrawingsFolder.Name = "TracerFolder"
+DrawingsFolder.Parent = game:GetService("CoreGui")
+
+-- 新しく生成されたパーツ（弾）を監視する
+workspace.DescendantAdded:Connect(function(obj)
+    if TracerSettings.Enabled and obj:IsA("BasePart") then
+        -- 弾っぽいパーツ（小さくて、当たり判定がないもの）を判定
+        if obj.Size.Magnitude < 2 and obj.CanCollide == false then
+            -- 弾のスタート位置（カメラの位置 = 自分が撃った位置）
+            local startPos = Camera.CFrame.Position
+            
+            -- 弾が消える（当たる）のを待つか、少しの間追跡する
+            task.spawn(function()
+                local endPos = startPos
+                local elapsed = 0
+                local hasHit = false
+
+                -- 弾が存在する間、または一定時間が経過するまで追跡
+                while obj.Parent and elapsed < 2 do
+                    endPos = obj.Position
+                    task.wait(0.01)
+                    elapsed = elapsed + 0.01
+                end
+
+                -- 弾が消えた時点（命中した時点）の位置を取得
+                local tracer = Drawing.new("Line")
+                tracer.Visible = true
+                tracer.Thickness = 2
+                tracer.Color = TracerSettings.Color
+                tracer.Transparency = 1
+                tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 50) -- 画面下部の自分の手元
+                
+                -- 着弾点を画面座標に変換
+                local screenPos, onScreen = Camera:WorldToViewportPoint(endPos)
+                if onScreen then
+                    tracer.To = Vector2.new(screenPos.X, screenPos.Y)
+                    tracer.Parent = DrawingsFolder
+
+                    -- フェードアウトして消す処理
+                    task.spawn(function()
+                        local fadeTime = TracerSettings.Lifetime
+                        while fadeTime > 0 do
+                            task.wait(0.05)
+                            fadeTime = fadeTime - 0.05
+                            tracer.Transparency = fadeTime / TracerSettings.Lifetime
+                        end
+                        tracer:Remove()
+                    end)
+                else
+                    tracer:Remove()
+                end
+            end)
+        end
+    end
+end)
