@@ -1472,3 +1472,114 @@ if Pages and Pages.Settings then
         end
     end
 end
+-- ================= クロスヘア完全修正版 (文字固定) =================
+
+-- 既存のクロスヘアUIを完全に削除
+local oldGui = game:GetService("CoreGui"):FindFirstChild("CustomCrosshairGui")
+if oldGui then oldGui:Destroy() end
+
+local CrosshairGui = Instance.new("ScreenGui")
+CrosshairGui.Name = "CustomCrosshairGui"
+CrosshairGui.ResetOnSpawn = false
+CrosshairGui.IgnoreGuiInset = true
+CrosshairGui.Parent = game:GetService("CoreGui")
+
+-- クロスヘア（線）のコンテナ
+local CrosshairContainer = Instance.new("Frame")
+CrosshairContainer.Size = UDim2.new(0, 100, 0, 100)
+CrosshairContainer.Position = UDim2.new(0.5, -50, 0.5, -50)
+CrosshairContainer.BackgroundTransparency = 1
+CrosshairContainer.Parent = CrosshairGui
+
+local function createLine(pos, size)
+    local line = Instance.new("Frame")
+    line.Size = size
+    line.Position = pos
+    line.BackgroundColor3 = Color3.fromRGB(80, 0, 200)
+    line.BorderSizePixel = 0
+    line.Parent = CrosshairContainer
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = line
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(0, 0, 0)
+    stroke.Thickness = 1
+    stroke.Parent = line
+end
+
+local thickness = 4
+local length = 20
+local gap = 6
+
+createLine(UDim2.new(0.5, -thickness/2, 0.5, -gap - length), UDim2.new(0, thickness, 0, length))
+createLine(UDim2.new(0.5, -thickness/2, 0.5, gap), UDim2.new(0, thickness, 0, length))
+createLine(UDim2.new(0.5, -gap - length, 0.5, -thickness/2), UDim2.new(0, length, 0, thickness))
+createLine(UDim2.new(0.5, gap, 0.5, -thickness/2), UDim2.new(0, length, 0, thickness))
+
+-- 文字（クロスヘアの外に出して固定）
+local CrosshairText = Instance.new("TextLabel")
+CrosshairText.Size = UDim2.new(0, 300, 0, 30)
+CrosshairText.Position = UDim2.new(0.5, -150, 0.5, 70)
+CrosshairText.BackgroundTransparency = 1
+CrosshairText.Text = "Pickles.win"
+CrosshairText.TextColor3 = Color3.fromRGB(80, 0, 200)
+CrosshairText.Font = Enum.Font.SourceSansBold
+CrosshairText.TextSize = 20
+CrosshairText.TextStrokeTransparency = 0
+CrosshairText.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+CrosshairText.Parent = CrosshairGui
+
+-- 回転アニメーション
+local rotationSpeed = 1
+local pulseSpeed = 3
+local time = 0
+
+game:GetService("RunService").RenderStepped:Connect(function(dt)
+    time = time + dt
+    CrosshairContainer.Rotation = time * rotationSpeed * 50
+    
+    local scale = 1 + math.sin(time * pulseSpeed) * 0.1
+    CrosshairContainer.Size = UDim2.new(0, 100 * scale, 0, 100 * scale)
+    CrosshairContainer.Position = UDim2.new(0.5, -50 * scale, 0.5, -50 * scale)
+end)
+
+-- 設定タブの古いUIを削除して、新しい入力欄を作成
+if Pages and Pages.Settings then
+    -- 古いCrosshair関連のUIを削除
+    for _, v in pairs(Pages.Settings:GetChildren()) do
+        if v:IsA("TextLabel") or v:IsA("TextBox") or v:IsA("TextButton") then
+            if string.find(v.Text or "", "Crosshair") or string.find(v.Name, "Crosshair") or v.PlaceholderText == "文字を入力..." then
+                v:Destroy()
+            end
+        end
+    end
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, 150, 0, 20)
+    label.Position = UDim2.new(0, 0, 0, 160)
+    label.BackgroundTransparency = 1
+    label.Text = "Crosshair Text:"
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.Font = Enum.Font.SourceSansBold
+    label.TextSize = 14
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = Pages.Settings
+
+    local textBox = Instance.new("TextBox")
+    textBox.Size = UDim2.new(0, 305, 0, 35)
+    textBox.Position = UDim2.new(0, 0, 0, 185)
+    textBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textBox.PlaceholderText = "文字を入力..."
+    textBox.Text = "Pickles.win"
+    textBox.Font = Enum.Font.SourceSansBold
+    textBox.TextSize = 14
+    textBox.Parent = Pages.Settings
+
+    -- 入力欄でエンターを押したら文字が変わる
+    textBox.FocusLost:Connect(function()
+        CrosshairText.Text = textBox.Text
+    end)
+end
