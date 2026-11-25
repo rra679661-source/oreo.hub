@@ -472,3 +472,78 @@ end)
 chTextBox.FocusLost:Connect(function()
     CrosshairText.Text = chTextBox.Text
 end)
+-- ================= クロスヘア文字消去 & 色変更ボタン追加 =================
+
+-- 1. 既存の設定タブから「文字入力欄」と「ラベル」を探して削除
+if Pages and Pages.Settings then
+    for _, v in pairs(Pages.Settings:GetChildren()) do
+        if v:IsA("TextBox") or (v:IsA("TextLabel") and string.find(v.Text, "Crosshair Text")) then
+            v:Destroy()
+        end
+    end
+
+    -- 2. 設定タブに色変更ボタンを追加
+    local colorLabel = Instance.new("TextLabel")
+    colorLabel.Size = UDim2.new(0, 150, 0, 20)
+    colorLabel.Position = UDim2.new(0, 0, 0, 90)
+    colorLabel.BackgroundTransparency = 1
+    colorLabel.Text = "Crosshair Color:"
+    colorLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    colorLabel.Font = Enum.Font.SourceSansBold
+    colorLabel.TextSize = 14
+    colorLabel.TextXAlignment = Enum.TextXAlignment.Left
+    colorLabel.Parent = Pages.Settings
+
+    local colorBtn = Instance.new("TextButton")
+    colorBtn.Size = UDim2.new(0, 305, 0, 35)
+    colorBtn.Position = UDim2.new(0, 0, 0, 115)
+    colorBtn.BackgroundColor3 = Color3.fromRGB(80, 0, 200) -- 初期色（紫）
+    colorBtn.Text = "Change Color (Current: Purple)"
+    colorBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    colorBtn.Font = Enum.Font.SourceSansBold
+    colorBtn.TextSize = 14
+    colorBtn.Parent = Pages.Settings
+
+    local colorIndex = 1
+    local colors = {
+        {name = "Purple", color = Color3.fromRGB(80, 0, 200)},
+        {name = "Cyan", color = Color3.fromRGB(0, 255, 255)},
+        {name = "Red", color = Color3.fromRGB(255, 0, 0)},
+        {name = "Green", color = Color3.fromRGB(0, 255, 0)},
+        {name = "Yellow", color = Color3.fromRGB(255, 255, 0)},
+        {name = "White", color = Color3.fromRGB(255, 255, 255)},
+        {name = "Black", color = Color3.fromRGB(0, 0, 0)},
+        {name = "Pink", color = Color3.fromRGB(255, 105, 180)}
+    }
+
+    colorBtn.MouseButton1Click:Connect(function()
+        colorIndex = colorIndex + 1
+        if colorIndex > #colors then colorIndex = 1 end
+        local selectedColor = colors[colorIndex]
+        
+        colorBtn.BackgroundColor3 = selectedColor.color
+        colorBtn.Text = "Change Color (Current: " .. selectedColor.name .. ")"
+        
+        -- 画面上のクロスヘアの色を変更
+        local chGui = game:GetService("CoreGui"):FindFirstChild("CustomCrosshairGui")
+        if chGui then
+            for _, v in pairs(chGui:GetDescendants()) do
+                if v:IsA("Frame") and v ~= chGui:FindFirstChildOfClass("Frame") then
+                    v.BackgroundColor3 = selectedColor.color
+                elseif v:IsA("TextLabel") then
+                    v.TextColor3 = selectedColor.color
+                end
+            end
+        end
+    end)
+end
+
+-- 3. 画面上のクロスヘアから「文字」を完全に消去
+local chGui = game:GetService("CoreGui"):FindFirstChild("CustomCrosshairGui")
+if chGui then
+    for _, v in pairs(chGui:GetDescendants()) do
+        if v:IsA("TextLabel") then
+            v:Destroy() -- 文字（Pickles.winなど）を削除
+        end
+    end
+end
