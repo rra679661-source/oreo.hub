@@ -1210,3 +1210,56 @@ if Pages and Pages.Settings then
     clearBtn.Parent = Pages.Settings
     clearBtn.MouseButton1Click:Connect(function() ChangeWeather("None") end)
 end
+-- ================= 弾表示・天候の削除 & 動く水色の枠の追加 =================
+
+-- 1. 弾表示と天気のUIを削除
+if Pages then
+    -- ESPタブからTracerを削除
+    if Pages.ESP then
+        for _, v in pairs(Pages.ESP:GetChildren()) do
+            if v:IsA("TextButton") and (string.find(v.Text, "Tracer") or string.find(v.Text, "Bullet")) then
+                v:Destroy()
+            end
+        end
+    end
+
+    -- 設定タブから天気と空のUIを削除
+    if Pages.Settings then
+        for _, v in pairs(Pages.Settings:GetChildren()) do
+            if v:IsA("TextButton") or v:IsA("TextLabel") then
+                if string.find(v.Text, "雨") or string.find(v.Text, "雪") or string.find(v.Text, "快晴") or string.find(v.Text, "夜空") or string.find(v.Text, "朝") or string.find(v.Text, "夕方") or string.find(v.Text, "元に戻す") or string.find(v.Text, "Sky") or string.find(v.Text, "Weather") then
+                    v:Destroy()
+                end
+            end
+        end
+    end
+end
+
+-- 既存の天気エフェクトを消去
+local weatherFolder = workspace:FindFirstChild("OreoWeather")
+if weatherFolder then weatherFolder:Destroy() end
+
+-- 2. 動く水色の枠（UIStroke）の追加
+if Frame then
+    -- 既存のUIStrokeがあれば削除
+    local oldStroke = Frame:FindFirstChildOfClass("UIStroke")
+    if oldStroke then oldStroke:Destroy() end
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Parent = Frame
+    stroke.Thickness = 2
+    stroke.Color = Color3.fromRGB(0, 255, 255) -- 水色 (Cyan)
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    
+    -- 枠の色相を動かすアニメーション
+    task.spawn(function()
+        local hue = 0.5 -- 水色付近からスタート
+        while stroke.Parent do
+            hue = hue + 0.005 -- 色相を少しずつずらす
+            if hue > 1 then hue = 0 end
+            -- 水色〜青〜紫の間で色を変化させる
+            stroke.Color = Color3.fromHSV(hue, 1, 1)
+            task.wait(0.05)
+        end
+    end)
+end
