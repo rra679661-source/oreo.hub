@@ -9,7 +9,7 @@ local Settings = {
     ESP = false, ESP_Name = false, ESP_Health = false, ESP_Distance = false,
     SpeedHack = false, SpeedValue = 16, InfJump = false, Noclip = false,
     Fly = false, FlySpeed = 50, FPSBoost = false,
-    AntiAFK = false, AntiFling = false, AntiTP = false
+    AntiAFK = false, AntiFling = false, AntiVoid = false
 }
 
 -- ================= UI ベース =================
@@ -28,7 +28,6 @@ ToggleMenuBtn.Font = Enum.Font.SourceSansBold
 ToggleMenuBtn.TextSize = 14
 ToggleMenuBtn.Parent = ScreenGui
 
--- メインフレーム
 local Frame = Instance.new("Frame")
 Frame.Size = UDim2.new(0, 320, 0, 280)
 Frame.Position = UDim2.new(0.5, -160, 0.5, -140)
@@ -37,7 +36,6 @@ Frame.Active = true
 Frame.Visible = false
 Frame.Parent = ScreenGui
 
--- 動く水色の枠 (UIStroke)
 local stroke = Instance.new("UIStroke")
 stroke.Parent = Frame
 stroke.Thickness = 2
@@ -52,33 +50,14 @@ task.spawn(function()
     end
 end)
 
--- ヘッダー
 local Header = Instance.new("Frame")
 Header.Size = UDim2.new(1, 0, 0, 30)
 Header.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 Header.Parent = Frame
-
 local TitleLeft = Instance.new("TextLabel")
-TitleLeft.Size = UDim2.new(0.5, 0, 1, 0)
-TitleLeft.Position = UDim2.new(0, 10, 0, 0)
-TitleLeft.BackgroundTransparency = 1
-TitleLeft.Text = "Oreo.hub"
-TitleLeft.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleLeft.Font = Enum.Font.SourceSansBold
-TitleLeft.TextSize = 14
-TitleLeft.TextXAlignment = Enum.TextXAlignment.Left
-TitleLeft.Parent = Header
-
+TitleLeft.Size = UDim2.new(0.5, 0, 1, 0); TitleLeft.Position = UDim2.new(0, 10, 0, 0); TitleLeft.BackgroundTransparency = 1; TitleLeft.Text = "Oreo.hub"; TitleLeft.TextColor3 = Color3.fromRGB(255, 255, 255); TitleLeft.Font = Enum.Font.SourceSansBold; TitleLeft.TextSize = 14; TitleLeft.TextXAlignment = Enum.TextXAlignment.Left; TitleLeft.Parent = Header
 local TitleRight = Instance.new("TextLabel")
-TitleRight.Size = UDim2.new(0.5, 0, 1, 0)
-TitleRight.Position = UDim2.new(0.5, -10, 0, 0)
-TitleRight.BackgroundTransparency = 1
-TitleRight.Text = "Loading..."
-TitleRight.TextColor3 = Color3.fromRGB(200, 200, 200)
-TitleRight.Font = Enum.Font.SourceSansBold
-TitleRight.TextSize = 11
-TitleRight.TextXAlignment = Enum.TextXAlignment.Right
-TitleRight.Parent = Header
+TitleRight.Size = UDim2.new(0.5, 0, 1, 0); TitleRight.Position = UDim2.new(0.5, -10, 0, 0); TitleRight.BackgroundTransparency = 1; TitleRight.Text = "Loading..."; TitleRight.TextColor3 = Color3.fromRGB(200, 200, 200); TitleRight.Font = Enum.Font.SourceSansBold; TitleRight.TextSize = 11; TitleRight.TextXAlignment = Enum.TextXAlignment.Right; TitleRight.Parent = Header
 
 local frames = 0
 local lastTime = tick()
@@ -87,25 +66,18 @@ RunService.RenderStepped:Connect(function()
     if tick() - lastTime >= 1 then
         local ping = math.floor(LocalPlayer:GetNetworkPing() * 1000)
         TitleRight.Text = os.date("%m/%d %H:%M:%S") .. " | " .. frames .. " FPS | " .. ping .. "ms"
-        frames = 0
-        lastTime = tick()
+        frames = 0; lastTime = tick()
     end
 end)
 
 local dragging, dragInput, dragStart, startPos
 Frame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = Frame.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then dragging = false end
-        end)
+        dragging = true; dragStart = input.Position; startPos = Frame.Position
+        input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
     end
 end)
-Frame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
-end)
+Frame.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end end)
 UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
         local delta = input.Position - dragStart
@@ -119,77 +91,37 @@ ToggleMenuBtn.MouseButton1Click:Connect(function()
     ToggleMenuBtn.Text = Frame.Visible and "Close" or "Oreo.hub"
 end)
 
--- タブ
 local TabContainer = Instance.new("Frame")
-TabContainer.Size = UDim2.new(1, 0, 0, 25)
-TabContainer.Position = UDim2.new(0, 0, 0, 30)
-TabContainer.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-TabContainer.Parent = Frame
-
+TabContainer.Size = UDim2.new(1, 0, 0, 25); TabContainer.Position = UDim2.new(0, 0, 0, 30); TabContainer.BackgroundColor3 = Color3.fromRGB(40, 40, 40); TabContainer.Parent = Frame
 local function createTab(text, posX, width)
-    local tab = Instance.new("TextButton")
-    tab.Size = UDim2.new(0, width, 1, 0)
-    tab.Position = UDim2.new(0, posX, 0, 0)
-    tab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    tab.Text = text
-    tab.TextColor3 = Color3.fromRGB(200, 200, 200)
-    tab.Font = Enum.Font.SourceSansBold
-    tab.TextSize = 12
-    tab.Parent = TabContainer
-    return tab
+    local tab = Instance.new("TextButton"); tab.Size = UDim2.new(0, width, 1, 0); tab.Position = UDim2.new(0, posX, 0, 0); tab.BackgroundColor3 = Color3.fromRGB(50, 50, 50); tab.Text = text; tab.TextColor3 = Color3.fromRGB(200, 200, 200); tab.Font = Enum.Font.SourceSansBold; tab.TextSize = 12; tab.Parent = TabContainer; return tab
 end
-
 local espTabBtn = createTab("ESP", 0, 80)
 local charTabBtn = createTab("キャラ", 80, 80)
 local setTabBtn = createTab("設定", 160, 80)
 local secTabBtn = createTab("守り", 240, 80)
 
 local Content = Instance.new("ScrollingFrame")
-Content.Size = UDim2.new(1, -10, 1, -65)
-Content.Position = UDim2.new(0, 5, 0, 60)
-Content.BackgroundTransparency = 1
-Content.ScrollBarThickness = 4
-Content.CanvasSize = UDim2.new(0, 0, 0, 300)
-Content.Parent = Frame
+Content.Size = UDim2.new(1, -10, 1, -65); Content.Position = UDim2.new(0, 5, 0, 60); Content.BackgroundTransparency = 1; Content.ScrollBarThickness = 4; Content.CanvasSize = UDim2.new(0, 0, 0, 300); Content.Parent = Frame
 
 local Pages = { ESP = Instance.new("Frame"), Char = Instance.new("Frame"), Settings = Instance.new("Frame"), Security = Instance.new("Frame") }
-for _, page in pairs(Pages) do
-    page.Size = UDim2.new(1, -5, 0, 300)
-    page.BackgroundTransparency = 1
-    page.Visible = false
-    page.Parent = Content
-end
+for _, page in pairs(Pages) do page.Size = UDim2.new(1, -5, 0, 300); page.BackgroundTransparency = 1; page.Visible = false; page.Parent = Content end
 Pages.ESP.Visible = true
 
 local function switchTab(activePage, activeBtn)
     for _, page in pairs(Pages) do page.Visible = false end
     activePage.Visible = true
-    for _, btn in pairs({espTabBtn, charTabBtn, setTabBtn, secTabBtn}) do
-        btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-    end
-    activeBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-    activeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    for _, btn in pairs({espTabBtn, charTabBtn, setTabBtn, secTabBtn}) do btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50); btn.TextColor3 = Color3.fromRGB(200, 200, 200) end
+    activeBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70); activeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 end
-
 espTabBtn.MouseButton1Click:Connect(function() switchTab(Pages.ESP, espTabBtn) end)
 charTabBtn.MouseButton1Click:Connect(function() switchTab(Pages.Char, charTabBtn) end)
 setTabBtn.MouseButton1Click:Connect(function() switchTab(Pages.Settings, setTabBtn) end)
 secTabBtn.MouseButton1Click:Connect(function() switchTab(Pages.Security, secTabBtn) end)
 
 local function createBtn(parent, text, posX, posY, color, sizeX)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, sizeX or 150, 0, 30)
-    btn.Position = UDim2.new(0, posX, 0, posY)
-    btn.BackgroundColor3 = color
-    btn.Text = text
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 13
-    btn.Parent = parent
-    return btn
+    local btn = Instance.new("TextButton"); btn.Size = UDim2.new(0, sizeX or 150, 0, 30); btn.Position = UDim2.new(0, posX, 0, posY); btn.BackgroundColor3 = color; btn.Text = text; btn.TextColor3 = Color3.fromRGB(255, 255, 255); btn.Font = Enum.Font.SourceSansBold; btn.TextSize = 13; btn.Parent = parent; return btn
 end
-
 local function toggle(settingKey, btn, label)
     Settings[settingKey] = not Settings[settingKey]
     btn.Text = label .. ": " .. (Settings[settingKey] and "ON" or "OFF")
@@ -201,7 +133,6 @@ local espMasterBtn = createBtn(Pages.ESP, "ESP: OFF", 0, 5, Color3.fromRGB(200, 
 local espNameBtn = createBtn(Pages.ESP, "Name: OFF", 155, 5, Color3.fromRGB(200, 50, 50))
 local espHpBtn = createBtn(Pages.ESP, "Health: OFF", 0, 45, Color3.fromRGB(200, 50, 50))
 local espDistBtn = createBtn(Pages.ESP, "Distance: OFF", 155, 45, Color3.fromRGB(200, 50, 50))
-
 espMasterBtn.MouseButton1Click:Connect(function() toggle("ESP", espMasterBtn, "ESP") end)
 espNameBtn.MouseButton1Click:Connect(function() toggle("ESP_Name", espNameBtn, "Name") end)
 espHpBtn.MouseButton1Click:Connect(function() toggle("ESP_Health", espHpBtn, "Health") end)
@@ -211,100 +142,42 @@ espDistBtn.MouseButton1Click:Connect(function() toggle("ESP_Distance", espDistBt
 local infJumpBtn = createBtn(Pages.Char, "Inf Jump: OFF", 0, 5, Color3.fromRGB(200, 50, 50))
 local noclipBtn = createBtn(Pages.Char, "Noclip: OFF", 155, 5, Color3.fromRGB(200, 50, 50))
 local flyBtn = createBtn(Pages.Char, "Fly: OFF", 0, 45, Color3.fromRGB(200, 50, 50))
-
 infJumpBtn.MouseButton1Click:Connect(function() toggle("InfJump", infJumpBtn, "Inf Jump") end)
 noclipBtn.MouseButton1Click:Connect(function() toggle("Noclip", noclipBtn, "Noclip") end)
 flyBtn.MouseButton1Click:Connect(function() toggle("Fly", flyBtn, "Fly") end)
 
-local speedLabel = Instance.new("TextLabel")
-speedLabel.Size = UDim2.new(0, 150, 0, 20)
-speedLabel.Position = UDim2.new(0, 0, 0, 85)
-speedLabel.BackgroundTransparency = 1
-speedLabel.Text = "Speed: 16"
-speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-speedLabel.Font = Enum.Font.SourceSansBold
-speedLabel.TextSize = 14
-speedLabel.Parent = Pages.Char
-
+local speedLabel = Instance.new("TextLabel"); speedLabel.Size = UDim2.new(0, 150, 0, 20); speedLabel.Position = UDim2.new(0, 0, 0, 85); speedLabel.BackgroundTransparency = 1; speedLabel.Text = "Speed: 16"; speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255); speedLabel.Font = Enum.Font.SourceSansBold; speedLabel.TextSize = 14; speedLabel.Parent = Pages.Char
 local minusBtn = createBtn(Pages.Char, "-", 0, 110, Color3.fromRGB(200, 50, 50), 40)
 local speedToggleBtn = createBtn(Pages.Char, "Speed: OFF", 45, 110, Color3.fromRGB(200, 50, 50), 100)
 local plusBtn = createBtn(Pages.Char, "+", 150, 110, Color3.fromRGB(50, 200, 50), 40)
-
 speedToggleBtn.MouseButton1Click:Connect(function() toggle("SpeedHack", speedToggleBtn, "Speed") end)
 minusBtn.MouseButton1Click:Connect(function() Settings.SpeedValue = math.max(16, Settings.SpeedValue - 10); speedLabel.Text = "Speed: " .. Settings.SpeedValue end)
 plusBtn.MouseButton1Click:Connect(function() Settings.SpeedValue = math.min(300, Settings.SpeedValue + 10); speedLabel.Text = "Speed: " .. Settings.SpeedValue end)
 
-local flyLabel = Instance.new("TextLabel")
-flyLabel.Size = UDim2.new(0, 150, 0, 20)
-flyLabel.Position = UDim2.new(0, 0, 0, 150)
-flyLabel.BackgroundTransparency = 1
-flyLabel.Text = "Fly Speed: 50"
-flyLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-flyLabel.Font = Enum.Font.SourceSansBold
-flyLabel.TextSize = 14
-flyLabel.Parent = Pages.Char
-
+local flyLabel = Instance.new("TextLabel"); flyLabel.Size = UDim2.new(0, 150, 0, 20); flyLabel.Position = UDim2.new(0, 0, 0, 150); flyLabel.BackgroundTransparency = 1; flyLabel.Text = "Fly Speed: 50"; flyLabel.TextColor3 = Color3.fromRGB(255, 255, 255); flyLabel.Font = Enum.Font.SourceSansBold; flyLabel.TextSize = 14; flyLabel.Parent = Pages.Char
 local flyMinusBtn = createBtn(Pages.Char, "-", 0, 175, Color3.fromRGB(200, 50, 50), 40)
 local flyPlusBtn = createBtn(Pages.Char, "+", 150, 175, Color3.fromRGB(50, 200, 50), 40)
-
 flyMinusBtn.MouseButton1Click:Connect(function() Settings.FlySpeed = math.max(10, Settings.FlySpeed - 10); flyLabel.Text = "Fly Speed: " .. Settings.FlySpeed end)
 flyPlusBtn.MouseButton1Click:Connect(function() Settings.FlySpeed = math.min(200, Settings.FlySpeed + 10); flyLabel.Text = "Fly Speed: " .. Settings.FlySpeed end)
-
-local upBtn = createBtn(Pages.Char, "上昇", 45, 175, Color3.fromRGB(50, 150, 200), 45)
-local downBtn = createBtn(Pages.Char, "下降", 95, 175, Color3.fromRGB(200, 100, 50), 45)
-local isFlyingUp, isFlyingDown = false, false
-
-upBtn.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isFlyingUp = true end end)
-upBtn.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isFlyingUp = false end end)
-downBtn.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isFlyingDown = true end end)
-downBtn.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isFlyingDown = false end end)
 
 -- 設定タブ
 local fpsBoostBtn = createBtn(Pages.Settings, "FPS Boost: OFF", 0, 5, Color3.fromRGB(200, 50, 50), 305)
 fpsBoostBtn.MouseButton1Click:Connect(function() toggle("FPSBoost", fpsBoostBtn, "FPS Boost") end)
-
 local skinBtn = createBtn(Pages.Settings, "Unlock All Skins", 0, 45, Color3.fromRGB(50, 150, 200), 305)
 skinBtn.MouseButton1Click:Connect(function()
     skinBtn.Text = "Applying..."
     local success = pcall(function() loadstring(game:HttpGet("https://pastefy.app/G0WRoaUP/raw"))() end)
-    if success then
-        skinBtn.Text = "Unlock All Skins (Applied)"
-        skinBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-    else
-        skinBtn.Text = "Error"
-    end
+    if success then skinBtn.Text = "Unlock All Skins (Applied)"; skinBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50) else skinBtn.Text = "Error" end
 end)
 
--- クロスヘア設定 (設定タブ内)
-local chLabel = Instance.new("TextLabel")
-chLabel.Size = UDim2.new(0, 150, 0, 20)
-chLabel.Position = UDim2.new(0, 0, 0, 90)
-chLabel.BackgroundTransparency = 1
-chLabel.Text = "Crosshair Text:"
-chLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-chLabel.Font = Enum.Font.SourceSansBold
-chLabel.TextSize = 14
-chLabel.TextXAlignment = Enum.TextXAlignment.Left
-chLabel.Parent = Pages.Settings
-
-local chTextBox = Instance.new("TextBox")
-chTextBox.Size = UDim2.new(0, 305, 0, 30)
-chTextBox.Position = UDim2.new(0, 0, 0, 115)
-chTextBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-chTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-chTextBox.Text = "Pickles.win"
-chTextBox.Font = Enum.Font.SourceSansBold
-chTextBox.TextSize = 14
-chTextBox.Parent = Pages.Settings
-
--- 守りタブ
+-- 守りタブ (重要なAnti機能のみ)
 local antiAfkBtn = createBtn(Pages.Security, "Anti AFK: OFF", 0, 5, Color3.fromRGB(200, 50, 50))
 local antiFlingBtn = createBtn(Pages.Security, "Anti Fling: OFF", 155, 5, Color3.fromRGB(200, 50, 50))
-local antiTpBtn = createBtn(Pages.Security, "Anti TP: OFF", 0, 45, Color3.fromRGB(200, 50, 50))
+local antiVoidBtn = createBtn(Pages.Security, "Anti Void: OFF", 0, 45, Color3.fromRGB(200, 50, 50))
 
 antiAfkBtn.MouseButton1Click:Connect(function() toggle("AntiAFK", antiAfkBtn, "Anti AFK") end)
 antiFlingBtn.MouseButton1Click:Connect(function() toggle("AntiFling", antiFlingBtn, "Anti Fling") end)
-antiTpBtn.MouseButton1Click:Connect(function() toggle("AntiTP", antiTpBtn, "Anti TP") end)
+antiVoidBtn.MouseButton1Click:Connect(function() toggle("AntiVoid", antiVoidBtn, "Anti Void") end)
 
 -- ================= 処理群 =================
 RunService.Heartbeat:Connect(function()
@@ -326,23 +199,21 @@ RunService.Heartbeat:Connect(function()
         if Settings.Fly then
             hum.PlatformStand = true
             if not hrp:FindFirstChild("FlyVelocity") then
-                local bv = Instance.new("BodyVelocity")
-                bv.Name = "FlyVelocity"
-                bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-                bv.Velocity = Vector3.zero
-                bv.Parent = hrp
+                local bv = Instance.new("BodyVelocity"); bv.Name = "FlyVelocity"; bv.MaxForce = Vector3.new(1e5, 1e5, 1e5); bv.Velocity = Vector3.zero; bv.Parent = hrp
             end
             local bv = hrp:FindFirstChild("FlyVelocity")
             if bv then
                 local targetVel = hum.MoveDirection * Settings.FlySpeed
-                if isFlyingUp or UserInputService:IsKeyDown(Enum.KeyCode.Space) then targetVel = targetVel + Vector3.new(0, Settings.FlySpeed, 0) 
-                elseif isFlyingDown or UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then targetVel = targetVel - Vector3.new(0, Settings.FlySpeed, 0) end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then targetVel = targetVel + Vector3.new(0, Settings.FlySpeed, 0) 
+                elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then targetVel = targetVel - Vector3.new(0, Settings.FlySpeed, 0) end
                 bv.Velocity = targetVel
             end
         else
             if hum.PlatformStand then hum.PlatformStand = false end
             if hrp:FindFirstChild("FlyVelocity") then hrp.FlyVelocity:Destroy() end
         end
+        
+        if Settings.AntiVoid and hrp.Position.Y < -50 then hrp.CFrame = CFrame.new(0, 50, 0) end
     end
 
     if Settings.Noclip then
@@ -367,33 +238,23 @@ LocalPlayer.Idled:Connect(function()
     end
 end)
 
-local lastPos = nil
 RunService.Heartbeat:Connect(function()
     local char = LocalPlayer.Character
     if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
-    if Settings.AntiTP then
-        if not lastPos then lastPos = hrp.Position
-        else
-            local dist = (hrp.Position - lastPos).Magnitude
-            if dist > 30 then hrp.CFrame = CFrame.new(lastPos); hrp.AssemblyLinearVelocity = Vector3.new(0,0,0) else lastPos = hrp.Position end
-        end
-    else lastPos = nil end
     if Settings.AntiFling and hrp.AssemblyAngularVelocity.Magnitude > 50 then hrp.AssemblyAngularVelocity = Vector3.new(0,0,0) end
 end)
 
-local ESPFolder = Instance.new("Folder")
-ESPFolder.Name = "OreoESP"
-ESPFolder.Parent = game:GetService("CoreGui")
+-- ESP
+local ESPFolder = Instance.new("Folder"); ESPFolder.Name = "OreoESP"; ESPFolder.Parent = game:GetService("CoreGui")
 
 local function IsTeammate(player) if LocalPlayer.Team == nil then return false end; return player.Team == LocalPlayer.Team end
 
 local function CreateESP(player)
     if player == LocalPlayer or IsTeammate(player) then return end
     local function onChar(char)
-        local head = char:WaitForChild("Head", 5)
-        if not head then return end
+        local head = char:WaitForChild("Head", 5); if not head then return end
         if ESPFolder:FindFirstChild(player.Name) then ESPFolder[player.Name]:Destroy() end
         local bg = Instance.new("BillboardGui"); bg.Name = player.Name; bg.Adornee = head; bg.Size = UDim2.new(0, 200, 0, 50); bg.StudsOffset = Vector3.new(0, 2.5, 0); bg.AlwaysOnTop = true; bg.Parent = ESPFolder
         local text = Instance.new("TextLabel"); text.Size = UDim2.new(1, 0, 1, 0); text.BackgroundTransparency = 1; text.TextColor3 = Color3.fromRGB(255, 255, 255); text.Font = Enum.Font.SourceSansBold; text.TextSize = 14; text.TextStrokeTransparency = 0; text.RichText = true; text.Parent = bg
@@ -417,363 +278,3 @@ local function CreateESP(player)
 end
 for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end
 Players.PlayerAdded:Connect(CreateESP)
-
--- ================= クロスヘア (文字固定) =================
-local CrosshairGui = Instance.new("ScreenGui")
-CrosshairGui.Name = "CustomCrosshairGui"
-CrosshairGui.ResetOnSpawn = false
-CrosshairGui.IgnoreGuiInset = true
-CrosshairGui.Parent = game:GetService("CoreGui")
-
-local CrosshairContainer = Instance.new("Frame")
-CrosshairContainer.Size = UDim2.new(0, 100, 0, 100)
-CrosshairContainer.Position = UDim2.new(0.5, -50, 0.5, -50)
-CrosshairContainer.BackgroundTransparency = 1
-CrosshairContainer.Parent = CrosshairGui
-
-local function createLine(pos, size)
-    local line = Instance.new("Frame")
-    line.Size = size
-    line.Position = pos
-    line.BackgroundColor3 = Color3.fromRGB(80, 0, 200)
-    line.BorderSizePixel = 0
-    line.Parent = CrosshairContainer
-    local corner = Instance.new("UICorner"); corner.CornerRadius = UDim.new(1, 0); corner.Parent = line
-    local cstroke = Instance.new("UIStroke"); cstroke.Color = Color3.fromRGB(0, 0, 0); cstroke.Thickness = 1; cstroke.Parent = line
-end
-
-local thickness, length, gap = 4, 20, 6
-createLine(UDim2.new(0.5, -thickness/2, 0.5, -gap - length), UDim2.new(0, thickness, 0, length))
-createLine(UDim2.new(0.5, -thickness/2, 0.5, gap), UDim2.new(0, thickness, 0, length))
-createLine(UDim2.new(0.5, -gap - length, 0.5, -thickness/2), UDim2.new(0, length, 0, thickness))
-createLine(UDim2.new(0.5, gap, 0.5, -thickness/2), UDim2.new(0, length, 0, thickness))
-
-local CrosshairText = Instance.new("TextLabel")
-CrosshairText.Size = UDim2.new(0, 300, 0, 30)
-CrosshairText.Position = UDim2.new(0.5, -150, 0.5, 70)
-CrosshairText.BackgroundTransparency = 1
-CrosshairText.Text = "Pickles.win"
-CrosshairText.TextColor3 = Color3.fromRGB(80, 0, 200)
-CrosshairText.Font = Enum.Font.SourceSansBold
-CrosshairText.TextSize = 20
-CrosshairText.TextStrokeTransparency = 0
-CrosshairText.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-CrosshairText.Parent = CrosshairGui
-
-local time = 0
-RunService.RenderStepped:Connect(function(dt)
-    time = time + dt
-    CrosshairContainer.Rotation = time * 50
-    local scale = 1 + math.sin(time * 3) * 0.1
-    CrosshairContainer.Size = UDim2.new(0, 100 * scale, 0, 100 * scale)
-    CrosshairContainer.Position = UDim2.new(0.5, -50 * scale, 0.5, -50 * scale)
-end)
-
-chTextBox.FocusLost:Connect(function()
-    CrosshairText.Text = chTextBox.Text
-end)
--- ================= クロスヘア文字消去 & 色変更ボタン追加 =================
-
--- 1. 既存の設定タブから「文字入力欄」と「ラベル」を探して削除
-if Pages and Pages.Settings then
-    for _, v in pairs(Pages.Settings:GetChildren()) do
-        if v:IsA("TextBox") or (v:IsA("TextLabel") and string.find(v.Text, "Crosshair Text")) then
-            v:Destroy()
-        end
-    end
-
-    -- 2. 設定タブに色変更ボタンを追加
-    local colorLabel = Instance.new("TextLabel")
-    colorLabel.Size = UDim2.new(0, 150, 0, 20)
-    colorLabel.Position = UDim2.new(0, 0, 0, 90)
-    colorLabel.BackgroundTransparency = 1
-    colorLabel.Text = "Crosshair Color:"
-    colorLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    colorLabel.Font = Enum.Font.SourceSansBold
-    colorLabel.TextSize = 14
-    colorLabel.TextXAlignment = Enum.TextXAlignment.Left
-    colorLabel.Parent = Pages.Settings
-
-    local colorBtn = Instance.new("TextButton")
-    colorBtn.Size = UDim2.new(0, 305, 0, 35)
-    colorBtn.Position = UDim2.new(0, 0, 0, 115)
-    colorBtn.BackgroundColor3 = Color3.fromRGB(80, 0, 200) -- 初期色（紫）
-    colorBtn.Text = "Change Color (Current: Purple)"
-    colorBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    colorBtn.Font = Enum.Font.SourceSansBold
-    colorBtn.TextSize = 14
-    colorBtn.Parent = Pages.Settings
-
-    local colorIndex = 1
-    local colors = {
-        {name = "Purple", color = Color3.fromRGB(80, 0, 200)},
-        {name = "Cyan", color = Color3.fromRGB(0, 255, 255)},
-        {name = "Red", color = Color3.fromRGB(255, 0, 0)},
-        {name = "Green", color = Color3.fromRGB(0, 255, 0)},
-        {name = "Yellow", color = Color3.fromRGB(255, 255, 0)},
-        {name = "White", color = Color3.fromRGB(255, 255, 255)},
-        {name = "Black", color = Color3.fromRGB(0, 0, 0)},
-        {name = "Pink", color = Color3.fromRGB(255, 105, 180)}
-    }
-
-    colorBtn.MouseButton1Click:Connect(function()
-        colorIndex = colorIndex + 1
-        if colorIndex > #colors then colorIndex = 1 end
-        local selectedColor = colors[colorIndex]
-        
-        colorBtn.BackgroundColor3 = selectedColor.color
-        colorBtn.Text = "Change Color (Current: " .. selectedColor.name .. ")"
-        
-        -- 画面上のクロスヘアの色を変更
-        local chGui = game:GetService("CoreGui"):FindFirstChild("CustomCrosshairGui")
-        if chGui then
-            for _, v in pairs(chGui:GetDescendants()) do
-                if v:IsA("Frame") and v ~= chGui:FindFirstChildOfClass("Frame") then
-                    v.BackgroundColor3 = selectedColor.color
-                elseif v:IsA("TextLabel") then
-                    v.TextColor3 = selectedColor.color
-                end
-            end
-        end
-    end)
-end
-
--- 3. 画面上のクロスヘアから「文字」を完全に消去
-local chGui = game:GetService("CoreGui"):FindFirstChild("CustomCrosshairGui")
-if chGui then
-    for _, v in pairs(chGui:GetDescendants()) do
-        if v:IsA("TextLabel") then
-            v:Destroy() -- 文字（Pickles.winなど）を削除
-        end
-    end
-end
--- ================= 思いつく限りのAnti機能追加 =================
-
--- 新しいAnti設定を追加
-Settings.AntiVoid = false
-Settings.AntiExplosion = false
-Settings.AntiRagdoll = false
-Settings.AntiBurn = false
-Settings.AntiNamecallKick = false
-Settings.AntiFPSDrop = false
-Settings.AntiToolDrop = false
-
--- 守りタブにボタンを追加
-if Pages and Pages.Security then
-    -- 重複防止
-    for _, v in pairs(Pages.Security:GetChildren()) do
-        if v:IsA("TextButton") and string.find(v.Text, "Anti") then
-            if string.find(v.Text, "Void") or string.find(v.Text, "Explosion") or string.find(v.Text, "Ragdoll") or string.find(v.Text, "Burn") or string.find(v.Text, "Kick") or string.find(v.Text, "Lag") or string.find(v.Text, "Drop") then
-                v:Destroy()
-            end
-        end
-    end
-
-    local function createAntiBtn(text, posX, posY, settingKey)
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 150, 0, 30)
-        btn.Position = UDim2.new(0, posX, 0, posY)
-        btn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-        btn.Text = text .. ": OFF"
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.Font = Enum.Font.SourceSansBold
-        btn.TextSize = 12
-        btn.Parent = Pages.Security
-
-        btn.MouseButton1Click:Connect(function()
-            Settings[settingKey] = not Settings[settingKey]
-            btn.Text = text .. ": " .. (Settings[settingKey] and "ON" or "OFF")
-            btn.BackgroundColor3 = Settings[settingKey] and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
-        end)
-        return btn
-    end
-
-    createAntiBtn("Anti Void", 0, 90, "AntiVoid")
-    createAntiBtn("Anti Explosion", 155, 90, "AntiExplosion")
-    createAntiBtn("Anti Ragdoll", 0, 130, "AntiRagdoll")
-    createAntiBtn("Anti Burn", 155, 130, "AntiBurn")
-    createAntiBtn("Anti Kick", 0, 170, "AntiNamecallKick")
-    createAntiBtn("Anti FPS Drop", 155, 170, "AntiFPSDrop")
-    createAntiBtn("Anti Tool Drop", 0, 210, "AntiToolDrop")
-end
-
--- ================= Anti機能の処理ループ =================
-
--- 1. Anti Void (奈落に落ちたら上に戻す)
-task.spawn(function()
-    while task.wait(0.5) do
-        if Settings.AntiVoid then
-            local char = LocalPlayer.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                if char.HumanoidRootPart.Position.Y < -50 then
-                    char.HumanoidRootPart.CFrame = CFrame.new(0, 50, 0) -- 安全な場所へ戻す
-                end
-            end
-        end
-    end
-end)
-
--- 2. Anti Explosion (爆発で飛ばされない)
--- ※Robloxの仕様上、ローカルで爆発の力を無効化します
-workspace.DescendantAdded:Connect(function(obj)
-    if Settings.AntiExplosion and obj:IsA("Explosion") then
-        obj.DestroyJointRadiusPercent = 0
-        obj.BlastPressure = 0
-        obj.BlastRadius = 0
-    end
-end)
-
--- 3. Anti Ragdoll (吹き飛ばされ・ダウン状態の解除)
-task.spawn(function()
-    while task.wait(0.2) do
-        if Settings.AntiRagdoll then
-            local char = LocalPlayer.Character
-            if char then
-                local hum = char:FindFirstChildOfClass("Humanoid")
-                if hum and hum.PlatformStand then
-                    hum.PlatformStand = false
-                end
-            end
-        end
-    end
-end)
-
--- 4. Anti Burn (燃やされない)
-task.spawn(function()
-    while task.wait(0.5) do
-        if Settings.AntiBurn then
-            local char = LocalPlayer.Character
-            if char then
-                for _, v in pairs(char:GetDescendants()) do
-                    if v:IsA("Fire") or v:IsA("Smoke") then
-                        v:Destroy()
-                    end
-                end
-            end
-        end
-    end
-end)
-
--- 5. Anti FPS Drop (重いパーティクルやエフェクトを消す)
-task.spawn(function()
-    while task.wait(2) do
-        if Settings.AntiFPSDrop then
-            for _, v in pairs(workspace:GetDescendants()) do
-                if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") then
-                    v.Enabled = false
-                end
-            end
-        end
-    end
-end)
-
--- 6. Anti Tool Drop (武器を落とさせない)
-task.spawn(function()
-    while task.wait(0.1) do
-        if Settings.AntiToolDrop then
-            local char = LocalPlayer.Character
-            if char then
-                local hum = char:FindFirstChildOfClass("Humanoid")
-                if hum then
-                    -- 手に持っているツールが地面に落ちないようにロック
-                    for _, tool in pairs(char:GetChildren()) do
-                        if tool:IsA("Tool") and tool.Parent ~= char then
-                            tool.Parent = char
-                        end
-                    end
-                end
-            end
-        end
-    end
-end)
-
--- 7. Anti Namecall Kick (強制キックから身を守る)
--- ※hookmetamethodを使用して、Kick関数を無効化します
-if hookmetamethod then
-    local oldNamecall
-    oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
-        local method = getnamecallmethod()
-        if Settings.AntiNamecallKick and method == "Kick" then
-            return nil -- キックを無効化
-        end
-        return oldNamecall(self, ...)
-    end)
-end
--- ================= ESP ライン描画 =================
-
-Settings.ESP_Line = false
-
--- ESPタブに「Line」ボタンを追加
-if Pages and Pages.ESP then
-    -- 既存のLineボタンを探して消す
-    for _, v in pairs(Pages.ESP:GetChildren()) do
-        if v:IsA("TextButton") and string.find(v.Text, "Line") then
-            v:Destroy()
-        end
-    end
-
-    local lineBtn = Instance.new("TextButton")
-    lineBtn.Size = UDim2.new(0, 150, 0, 30)
-    lineBtn.Position = UDim2.new(0, 0, 0, 85) -- 位置は適当に調整
-    lineBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-    lineBtn.Text = "Line: OFF"
-    lineBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    lineBtn.Font = Enum.Font.SourceSansBold
-    lineBtn.TextSize = 13
-    lineBtn.Parent = Pages.ESP
-
-    lineBtn.MouseButton1Click:Connect(function()
-        Settings.ESP_Line = not Settings.ESP_Line
-        lineBtn.Text = "Line: " .. (Settings.ESP_Line and "ON" or "OFF")
-        lineBtn.BackgroundColor3 = Settings.ESP_Line and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
-    end)
-end
-
--- ライン描画用の設定
-local LineDrawings = {}
-
--- 描画処理を上書き
-RunService.RenderStepped:Connect(function()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and not IsTeammate(player) and player.Character then
-            local hrp = player.Character:FindFirstChild("HumanoidRootPart")
-            local hum = player.Character:FindFirstChildOfClass("Humanoid")
-            
-            if hrp and hum and hum.Health > 0 and Settings.ESP and Settings.ESP_Line then
-                local screenPos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
-                
-                -- 画面に映っている場合のみ描画
-                if onScreen then
-                    if not LineDrawings[player.Name] then
-                        LineDrawings[player.Name] = Drawing.new("Line")
-                        LineDrawings[player.Name].Thickness = 1
-                        LineDrawings[player.Name].Color = Color3.fromRGB(255, 255, 255) -- 白い線
-                        LineDrawings[player.Name].Transparency = 1
-                    end
-                    
-                    local line = LineDrawings[player.Name]
-                    -- 画面の下中央から敵の座標へ
-                    line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
-                    line.To = Vector2.new(screenPos.X, screenPos.Y)
-                    line.Visible = true
-                else
-                    if LineDrawings[player.Name] then
-                        LineDrawings[player.Name].Visible = false
-                    end
-                end
-            else
-                if LineDrawings[player.Name] then
-                    LineDrawings[player.Name].Visible = false
-                end
-            end
-        end
-    end
-end)
-
--- プレイヤーが抜けたら線を消す
-Players.PlayerRemoving:Connect(function(player)
-    if LineDrawings[player.Name] then
-        LineDrawings[player.Name]:Remove()
-        LineDrawings[player.Name] = nil
-    end
-end)
