@@ -1263,3 +1263,123 @@ if Frame then
         end
     end)
 end
+-- ================= カスタム動くクロスヘア (TikTok風) =================
+
+-- 既存のクロスヘアがあれば削除
+local oldGui = game:GetService("CoreGui"):FindFirstChild("CustomCrosshairGui")
+if oldGui then oldGui:Destroy() end
+
+local CrosshairGui = Instance.new("ScreenGui")
+CrosshairGui.Name = "CustomCrosshairGui"
+CrosshairGui.ResetOnSpawn = false
+CrosshairGui.IgnoreGuiInset = true
+CrosshairGui.Parent = game:GetService("CoreGui")
+
+-- クロスヘアをまとめるフレーム
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 200, 0, 200)
+MainFrame.Position = UDim2.new(0.5, -100, 0.5, -100) -- 画面中央
+MainFrame.BackgroundTransparency = 1
+MainFrame.Parent = CrosshairGui
+
+local CrosshairContainer = Instance.new("Frame")
+CrosshairContainer.Size = UDim2.new(0, 100, 0, 100)
+CrosshairContainer.Position = UDim2.new(0.5, -50, 0.5, -50)
+CrosshairContainer.BackgroundTransparency = 1
+CrosshairContainer.Parent = MainFrame
+
+-- 4本の線を作る
+local function createLine(pos, size)
+    local line = Instance.new("Frame")
+    line.Size = size
+    line.Position = pos
+    line.BackgroundColor3 = Color3.fromRGB(80, 0, 200)
+    line.BorderSizePixel = 0
+    line.Parent = CrosshairContainer
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = line
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(0, 0, 0)
+    stroke.Thickness = 1
+    stroke.Parent = line
+end
+
+local thickness = 4
+local length = 20
+local gap = 6
+
+createLine(UDim2.new(0.5, -thickness/2, 0.5, -gap - length), UDim2.new(0, thickness, 0, length))
+createLine(UDim2.new(0.5, -thickness/2, 0.5, gap), UDim2.new(0, thickness, 0, length))
+createLine(UDim2.new(0.5, -gap - length, 0.5, -thickness/2), UDim2.new(0, length, 0, thickness))
+createLine(UDim2.new(0.5, gap, 0.5, -thickness/2), UDim2.new(0, length, 0, thickness))
+
+-- 中央のテキスト（Pickles.win など）
+local CrosshairText = Instance.new("TextLabel")
+CrosshairText.Size = UDim2.new(1, 0, 0, 30)
+CrosshairText.Position = UDim2.new(0, 0, 0.5, 20) -- クロスヘアの少し下
+CrosshairText.BackgroundTransparency = 1
+CrosshairText.Text = "Pickles.win"
+CrosshairText.TextColor3 = Color3.fromRGB(80, 0, 200)
+CrosshairText.Font = Enum.Font.SourceSansBold
+CrosshairText.TextSize = 20
+CrosshairText.TextStrokeTransparency = 0
+CrosshairText.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+CrosshairText.Parent = CrosshairContainer
+
+-- 回転と拡大縮小のアニメーション
+local rotationSpeed = 1
+local pulseSpeed = 3
+local time = 0
+
+game:GetService("RunService").RenderStepped:Connect(function(dt)
+    time = time + dt
+    
+    -- 回転
+    CrosshairContainer.Rotation = time * rotationSpeed * 50
+    
+    -- 脈打つような拡大縮小 (0.9 〜 1.1 の間)
+    local scale = 1 + math.sin(time * pulseSpeed) * 0.1
+    CrosshairContainer.Size = UDim2.new(0, 100 * scale, 0, 100 * scale)
+    CrosshairContainer.Position = UDim2.new(0.5, -50 * scale, 0.5, -50 * scale)
+end)
+
+-- 設定タブにUIを追加
+if Pages and Pages.Settings then
+    -- 既存のCrosshair関連のUIを削除
+    for _, v in pairs(Pages.Settings:GetChildren()) do
+        if v:IsA("TextLabel") or v:IsA("TextButton") or v:IsA("TextBox") then
+            if string.find(v.Text or "", "Crosshair") or string.find(v.Name, "Crosshair") then
+                v:Destroy()
+            end
+        end
+    end
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, 150, 0, 20)
+    label.Position = UDim2.new(0, 0, 0, 160)
+    label.BackgroundTransparency = 1
+    label.Text = "Crosshair Text:"
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.Font = Enum.Font.SourceSansBold
+    label.TextSize = 14
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = Pages.Settings
+
+    local textBox = Instance.new("TextBox")
+    textBox.Size = UDim2.new(0, 305, 0, 35)
+    textBox.Position = UDim2.new(0, 0, 0, 185)
+    textBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textBox.PlaceholderText = "文字を入力..."
+    textBox.Text = "Pickles.win"
+    textBox.Font = Enum.Font.SourceSansBold
+    textBox.TextSize = 14
+    textBox.Parent = Pages.Settings
+
+    textBox.FocusLost:Connect(function()
+        CrosshairText.Text = textBox.Text
+    end)
+end
