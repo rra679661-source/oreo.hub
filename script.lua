@@ -278,3 +278,86 @@ local function CreateESP(player)
 end
 for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end
 Players.PlayerAdded:Connect(CreateESP)
+-- ================= スカイボックス変更機能 =================
+
+local Lighting = game:GetService("Lighting")
+
+-- 設定タブにUIを追加
+if Pages and Pages.Settings then
+    -- 既存のSky関連のボタンを削除
+    for _, v in pairs(Pages.Settings:GetChildren()) do
+        if v:IsA("TextButton") and string.find(v.Text, "Sky") then
+            v:Destroy()
+        end
+    end
+
+    local skyLabel = Instance.new("TextLabel")
+    skyLabel.Size = UDim2.new(0, 150, 0, 20)
+    skyLabel.Position = UDim2.new(0, 0, 0, 90)
+    skyLabel.BackgroundTransparency = 1
+    skyLabel.Text = "Sky Changer:"
+    skyLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    skyLabel.Font = Enum.Font.SourceSansBold
+    skyLabel.TextSize = 14
+    skyLabel.TextXAlignment = Enum.TextXAlignment.Left
+    skyLabel.Parent = Pages.Settings
+
+    -- 空を変更する関数（ライティングの色と明るさを変える）
+    local function ChangeSky(ambientColor, outdoorColor, brightness)
+        Lighting.Ambient = ambientColor
+        Lighting.OutdoorAmbient = outdoorColor
+        Lighting.Brightness = brightness
+    end
+
+    -- 夜空ボタン
+    local nightBtn = Instance.new("TextButton")
+    nightBtn.Size = UDim2.new(0, 95, 0, 30)
+    nightBtn.Position = UDim2.new(0, 0, 0, 115)
+    nightBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 80)
+    nightBtn.Text = "夜空"
+    nightBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nightBtn.Font = Enum.Font.SourceSansBold
+    nightBtn.Parent = Pages.Settings
+    nightBtn.MouseButton1Click:Connect(function()
+        ChangeSky(Color3.fromRGB(30, 30, 80), Color3.fromRGB(10, 10, 40), 1)
+    end)
+
+    -- 朝ボタン
+    local morningBtn = Instance.new("TextButton")
+    morningBtn.Size = UDim2.new(0, 95, 0, 30)
+    morningBtn.Position = UDim2.new(0, 105, 0, 115)
+    morningBtn.BackgroundColor3 = Color3.fromRGB(150, 200, 255)
+    morningBtn.Text = "朝"
+    morningBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    morningBtn.Font = Enum.Font.SourceSansBold
+    morningBtn.Parent = Pages.Settings
+    morningBtn.MouseButton1Click:Connect(function()
+        ChangeSky(Color3.fromRGB(200, 200, 200), Color3.fromRGB(150, 150, 150), 2)
+    end)
+
+    -- 夕方ボタン
+    local sunsetBtn = Instance.new("TextButton")
+    sunsetBtn.Size = UDim2.new(0, 95, 0, 30)
+    sunsetBtn.Position = UDim2.new(0, 210, 0, 115)
+    sunsetBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 50)
+    sunsetBtn.Text = "夕方"
+    sunsetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sunsetBtn.Font = Enum.Font.SourceSansBold
+    sunsetBtn.Parent = Pages.Settings
+    sunsetBtn.MouseButton1Click:Connect(function()
+        ChangeSky(Color3.fromRGB(150, 100, 100), Color3.fromRGB(100, 50, 50), 1.5)
+    end)
+
+    -- リセットボタン
+    local resetBtn = Instance.new("TextButton")
+    resetBtn.Size = UDim2.new(0, 305, 0, 30)
+    resetBtn.Position = UDim2.new(0, 0, 0, 155)
+    resetBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    resetBtn.Text = "元の空に戻す"
+    resetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    resetBtn.Font = Enum.Font.SourceSansBold
+    resetBtn.Parent = Pages.Settings
+    resetBtn.MouseButton1Click:Connect(function()
+        ChangeSky(Color3.fromRGB(128, 128, 128), Color3.fromRGB(128, 128, 128), 2)
+    end)
+end
