@@ -842,3 +842,196 @@ workspace.DescendantAdded:Connect(function(obj)
         end
     end
 end)
+-- ================= 空（スカイボックス）＆天気変更 =================
+
+local Lighting = game:GetService("Lighting")
+local SkyFolder = workspace:FindFirstChild("Sky") or workspace:FindFirstChildOfClass("Sky")
+
+-- 現在の空を保存しておく（元に戻せるように）
+local originalSky = SkyFolder
+
+-- 天気（パーティクル）用のフォルダ
+local WeatherFolder = Instance.new("Folder")
+WeatherFolder.Name = "OreoWeather"
+WeatherFolder.Parent = workspace
+
+-- 空を変更する関数
+local function ChangeSky(assetId)
+    -- 既存の空を削除
+    for _, v in pairs(workspace:GetChildren()) do
+        if v:IsA("Sky") then v:Destroy() end
+    end
+    
+    -- 新しい空を作成
+    if assetId then
+        local newSky = Instance.new("Sky")
+        newSky.SkyboxBk = "rbxassetid://" .. assetId
+        newSky.SkyboxDn = "rbxassetid://" .. assetId
+        newSky.SkyboxFt = "rbxassetid://" .. assetId
+        newSky.SkyboxLf = "rbxassetid://" .. assetId
+        newSky.SkyboxRt = "rbxassetid://" .. assetId
+        newSky.SkyboxUp = "rbxassetid://" .. assetId
+        newSky.Parent = workspace
+    end
+end
+
+-- 天気（パーティクル）を作成する関数
+local function ChangeWeather(weatherType)
+    -- 既存の天気を削除
+    for _, v in pairs(WeatherFolder:GetChildren()) do
+        v:Destroy()
+    end
+
+    if weatherType == "None" then return end
+
+    local emitter = Instance.new("ParticleEmitter")
+    emitter.Texture = "rbxassetid://241876427" -- 雨/雪のテクスチャ
+    emitter.Rate = 500
+    emitter.Lifetime = NumberRange.new(1, 2)
+    emitter.Speed = NumberRange.new(20, 30)
+    emitter.SpreadAngle = Vector2.new(10, 10)
+    emitter.Rotation = NumberRange.new(0, 360)
+    
+    if weatherType == "Rain" then
+        emitter.Color = ColorSequence.new(Color3.fromRGB(150, 150, 255))
+        emitter.Size = NumberSequence.new(0.1, 0.1)
+        emitter.Transparency = NumberSequence.new(0.5, 0.5)
+        emitter.Acceleration = Vector3.new(0, -50, 0)
+    elseif weatherType == "Snow" then
+        emitter.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255))
+        emitter.Size = NumberSequence.new(0.5, 0.5)
+        emitter.Transparency = NumberSequence.new(0.3, 0.3)
+        emitter.Acceleration = Vector3.new(0, -10, 0)
+    end
+
+    -- 自分の周りに天気を降らせる
+    local attachment = Instance.new("Attachment")
+    attachment.Parent = Camera
+    
+    emitter.Parent = attachment
+end
+
+-- 設定タブにUIを追加
+if Pages and Pages.Settings then
+    -- 既存のSky関連のボタンを削除
+    for _, v in pairs(Pages.Settings:GetChildren()) do
+        if v:IsA("TextButton") and (string.find(v.Text, "Sky") or string.find(v.Text, "Weather")) then
+            v:Destroy()
+        end
+    end
+
+    -- 空の変更ボタン
+    local skyLabel = Instance.new("TextLabel")
+    skyLabel.Size = UDim2.new(0, 150, 0, 20)
+    skyLabel.Position = UDim2.new(0, 0, 0, 90)
+    skyLabel.BackgroundTransparency = 1
+    skyLabel.Text = "Sky Changer:"
+    skyLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    skyLabel.Font = Enum.Font.SourceSansBold
+    skyLabel.TextSize = 14
+    skyLabel.TextXAlignment = Enum.TextXAlignment.Left
+    skyLabel.Parent = Pages.Settings
+
+    -- 各空のボタン（Robloxの標準スカイボックスのIDを使用）
+    local nightBtn = Instance.new("TextButton")
+    nightBtn.Size = UDim2.new(0, 70, 0, 25)
+    nightBtn.Position = UDim2.new(0, 0, 0, 115)
+    nightBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 100)
+    nightBtn.Text = "夜空"
+    nightBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nightBtn.Font = Enum.Font.SourceSansBold
+    nightBtn.Parent = Pages.Settings
+    nightBtn.MouseButton1Click:Connect(function()
+        ChangeSky("4803887853") -- 夜空のアセットID
+        Lighting.Ambient = Color3.fromRGB(50, 50, 80)
+        Lighting.OutdoorAmbient = Color3.fromRGB(30, 30, 50)
+    end)
+
+    local morningBtn = Instance.new("TextButton")
+    morningBtn.Size = UDim2.new(0, 70, 0, 25)
+    morningBtn.Position = UDim2.new(0, 80, 0, 115)
+    morningBtn.BackgroundColor3 = Color3.fromRGB(150, 200, 255)
+    morningBtn.Text = "朝"
+    morningBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    morningBtn.Font = Enum.Font.SourceSansBold
+    morningBtn.Parent = Pages.Settings
+    morningBtn.MouseButton1Click:Connect(function()
+        ChangeSky("4803885252") -- 朝のアセットID
+        Lighting.Ambient = Color3.fromRGB(200, 200, 200)
+        Lighting.OutdoorAmbient = Color3.fromRGB(150, 150, 150)
+    end)
+
+    local sunsetBtn = Instance.new("TextButton")
+    sunsetBtn.Size = UDim2.new(0, 70, 0, 25)
+    sunsetBtn.Position = UDim2.new(0, 160, 0, 115)
+    sunsetBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 50)
+    sunsetBtn.Text = "夕方"
+    sunsetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sunsetBtn.Font = Enum.Font.SourceSansBold
+    sunsetBtn.Parent = Pages.Settings
+    sunsetBtn.MouseButton1Click:Connect(function()
+        ChangeSky("4803886158") -- 夕方のアセットID
+        Lighting.Ambient = Color3.fromRGB(150, 100, 100)
+        Lighting.OutdoorAmbient = Color3.fromRGB(100, 50, 50)
+    end)
+
+    local resetSkyBtn = Instance.new("TextButton")
+    resetSkyBtn.Size = UDim2.new(0, 70, 0, 25)
+    resetSkyBtn.Position = UDim2.new(0, 240, 0, 115)
+    resetSkyBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    resetSkyBtn.Text = "元に戻す"
+    resetSkyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    resetSkyBtn.Font = Enum.Font.SourceSansBold
+    resetSkyBtn.Parent = Pages.Settings
+    resetSkyBtn.MouseButton1Click:Connect(function()
+        ChangeSky(nil)
+        if originalSky then
+            local restoredSky = originalSky:Clone()
+            restoredSky.Parent = workspace
+        end
+        Lighting.Ambient = Color3.fromRGB(128, 128, 128)
+        Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+    end)
+
+    -- 天気の変更ボタン
+    local weatherLabel = Instance.new("TextLabel")
+    weatherLabel.Size = UDim2.new(0, 150, 0, 20)
+    weatherLabel.Position = UDim2.new(0, 0, 0, 160)
+    weatherLabel.BackgroundTransparency = 1
+    weatherLabel.Text = "Weather:"
+    weatherLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    weatherLabel.Font = Enum.Font.SourceSansBold
+    weatherLabel.TextSize = 14
+    weatherLabel.TextXAlignment = Enum.TextXAlignment.Left
+    weatherLabel.Parent = Pages.Settings
+
+    local rainBtn = Instance.new("TextButton")
+    rainBtn.Size = UDim2.new(0, 70, 0, 25)
+    rainBtn.Position = UDim2.new(0, 0, 0, 185)
+    rainBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 200)
+    rainBtn.Text = "雨"
+    rainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    rainBtn.Font = Enum.Font.SourceSansBold
+    rainBtn.Parent = Pages.Settings
+    rainBtn.MouseButton1Click:Connect(function() ChangeWeather("Rain") end)
+
+    local snowBtn = Instance.new("TextButton")
+    snowBtn.Size = UDim2.new(0, 70, 0, 25)
+    snowBtn.Position = UDim2.new(0, 80, 0, 185)
+    snowBtn.BackgroundColor3 = Color3.fromRGB(200, 200, 255)
+    snowBtn.Text = "雪"
+    snowBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+    snowBtn.Font = Enum.Font.SourceSansBold
+    snowBtn.Parent = Pages.Settings
+    snowBtn.MouseButton1Click:Connect(function() ChangeWeather("Snow") end)
+
+    local clearBtn = Instance.new("TextButton")
+    clearBtn.Size = UDim2.new(0, 70, 0, 25)
+    clearBtn.Position = UDim2.new(0, 160, 0, 185)
+    clearBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    clearBtn.Text = "快晴"
+    clearBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    clearBtn.Font = Enum.Font.SourceSansBold
+    clearBtn.Parent = Pages.Settings
+    clearBtn.MouseButton1Click:Connect(function() ChangeWeather("None") end)
+end
