@@ -1382,4 +1382,93 @@ if Pages and Pages.Settings then
     textBox.FocusLost:Connect(function()
         CrosshairText.Text = textBox.Text
     end)
+end-- ================= クロスヘア文字固定化修正 =================
+
+-- 既存のクロスヘアUIを一度完全に削除
+local oldGui = game:GetService("CoreGui"):FindFirstChild("CustomCrosshairGui")
+if oldGui then oldGui:Destroy() end
+
+-- 新しいUIの作成
+local CrosshairGui = Instance.new("ScreenGui")
+CrosshairGui.Name = "CustomCrosshairGui"
+CrosshairGui.ResetOnSpawn = false
+CrosshairGui.IgnoreGuiInset = true
+CrosshairGui.Parent = game:GetService("CoreGui")
+
+-- 画面中央のコンテナ（ここが回転する）
+local CrosshairContainer = Instance.new("Frame")
+CrosshairContainer.Size = UDim2.new(0, 100, 0, 100)
+CrosshairContainer.Position = UDim2.new(0.5, -50, 0.5, -50)
+CrosshairContainer.BackgroundTransparency = 1
+CrosshairContainer.Parent = CrosshairGui
+
+-- 4本の線を作る
+local function createLine(pos, size)
+    local line = Instance.new("Frame")
+    line.Size = size
+    line.Position = pos
+    line.BackgroundColor3 = Color3.fromRGB(80, 0, 200)
+    line.BorderSizePixel = 0
+    line.Parent = CrosshairContainer
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = line
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(0, 0, 0)
+    stroke.Thickness = 1
+    stroke.Parent = line
+end
+
+local thickness = 4
+local length = 20
+local gap = 6
+
+createLine(UDim2.new(0.5, -thickness/2, 0.5, -gap - length), UDim2.new(0, thickness, 0, length))
+createLine(UDim2.new(0.5, -thickness/2, 0.5, gap), UDim2.new(0, thickness, 0, length))
+createLine(UDim2.new(0.5, -gap - length, 0.5, -thickness/2), UDim2.new(0, length, 0, thickness))
+createLine(UDim2.new(0.5, gap, 0.5, -thickness/2), UDim2.new(0, length, 0, thickness))
+
+-- 文字（クロスヘアとは別の独立したUIとして配置）
+local CrosshairText = Instance.new("TextLabel")
+CrosshairText.Size = UDim2.new(0, 300, 0, 30)
+-- 画面の中央から少し下に固定
+CrosshairText.Position = UDim2.new(0.5, -150, 0.5, 70)
+CrosshairText.BackgroundTransparency = 1
+CrosshairText.Text = "Pickles.win"
+CrosshairText.TextColor3 = Color3.fromRGB(80, 0, 200)
+CrosshairText.Font = Enum.Font.SourceSansBold
+CrosshairText.TextSize = 20
+CrosshairText.TextStrokeTransparency = 0
+CrosshairText.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+CrosshairText.Parent = CrosshairGui
+
+-- 回転と拡大縮小のアニメーション（クロスヘアのみ）
+local rotationSpeed = 1
+local pulseSpeed = 3
+local time = 0
+
+game:GetService("RunService").RenderStepped:Connect(function(dt)
+    time = time + dt
+    
+    -- 回転
+    CrosshairContainer.Rotation = time * rotationSpeed * 50
+    
+    -- 脈打つような拡大縮小 (0.9 〜 1.1 の間)
+    local scale = 1 + math.sin(time * pulseSpeed) * 0.1
+    CrosshairContainer.Size = UDim2.new(0, 100 * scale, 0, 100 * scale)
+    CrosshairContainer.Position = UDim2.new(0.5, -50 * scale, 0.5, -50 * scale)
+end)
+
+-- 設定タブの入力欄の連動を修正
+if Pages and Pages.Settings then
+    for _, v in pairs(Pages.Settings:GetChildren()) do
+        if v:IsA("TextBox") and v.PlaceholderText == "文字を入力..." then
+            -- 以前のイベントを切断するために新しく接続
+            v.FocusLost:Connect(function()
+                CrosshairText.Text = v.Text
+            end)
+        end
+    end
 end
