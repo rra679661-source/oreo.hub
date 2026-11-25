@@ -699,3 +699,81 @@ if hookmetamethod then
         return oldNamecall(self, ...)
     end)
 end
+-- ================= ESP ライン描画 =================
+
+Settings.ESP_Line = false
+
+-- ESPタブに「Line」ボタンを追加
+if Pages and Pages.ESP then
+    -- 既存のLineボタンを探して消す
+    for _, v in pairs(Pages.ESP:GetChildren()) do
+        if v:IsA("TextButton") and string.find(v.Text, "Line") then
+            v:Destroy()
+        end
+    end
+
+    local lineBtn = Instance.new("TextButton")
+    lineBtn.Size = UDim2.new(0, 150, 0, 30)
+    lineBtn.Position = UDim2.new(0, 0, 0, 85) -- 位置は適当に調整
+    lineBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    lineBtn.Text = "Line: OFF"
+    lineBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    lineBtn.Font = Enum.Font.SourceSansBold
+    lineBtn.TextSize = 13
+    lineBtn.Parent = Pages.ESP
+
+    lineBtn.MouseButton1Click:Connect(function()
+        Settings.ESP_Line = not Settings.ESP_Line
+        lineBtn.Text = "Line: " .. (Settings.ESP_Line and "ON" or "OFF")
+        lineBtn.BackgroundColor3 = Settings.ESP_Line and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+    end)
+end
+
+-- ライン描画用の設定
+local LineDrawings = {}
+
+-- 描画処理を上書き
+RunService.RenderStepped:Connect(function()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and not IsTeammate(player) and player.Character then
+            local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+            local hum = player.Character:FindFirstChildOfClass("Humanoid")
+            
+            if hrp and hum and hum.Health > 0 and Settings.ESP and Settings.ESP_Line then
+                local screenPos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+                
+                -- 画面に映っている場合のみ描画
+                if onScreen then
+                    if not LineDrawings[player.Name] then
+                        LineDrawings[player.Name] = Drawing.new("Line")
+                        LineDrawings[player.Name].Thickness = 1
+                        LineDrawings[player.Name].Color = Color3.fromRGB(255, 255, 255) -- 白い線
+                        LineDrawings[player.Name].Transparency = 1
+                    end
+                    
+                    local line = LineDrawings[player.Name]
+                    -- 画面の下中央から敵の座標へ
+                    line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                    line.To = Vector2.new(screenPos.X, screenPos.Y)
+                    line.Visible = true
+                else
+                    if LineDrawings[player.Name] then
+                        LineDrawings[player.Name].Visible = false
+                    end
+                end
+            else
+                if LineDrawings[player.Name] then
+                    LineDrawings[player.Name].Visible = false
+                end
+            end
+        end
+    end
+end)
+
+-- プレイヤーが抜けたら線を消す
+Players.PlayerRemoving:Connect(function(player)
+    if LineDrawings[player.Name] then
+        LineDrawings[player.Name]:Remove()
+        LineDrawings[player.Name] = nil
+    end
+end)
