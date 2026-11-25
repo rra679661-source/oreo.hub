@@ -361,3 +361,142 @@ if Pages and Pages.Settings then
         ChangeSky(Color3.fromRGB(128, 128, 128), Color3.fromRGB(128, 128, 128), 2)
     end)
 end
+-- ================= キャラクタータブ レイアウト完全修正 =================
+
+if Pages and Pages.Char then
+    local charPage = Pages.Char
+    
+    -- 1. 既存の配置を一度すべて消去（再配置のため）
+    for _, v in pairs(charPage:GetChildren()) do
+        if v:IsA("TextButton") or v:IsA("TextLabel") then
+            if string.find(v.Text, "Speed") or string.find(v.Text, "Fly") or v.Text == "-" or v.Text == "+" or string.find(v.Text, "上昇") or string.find(v.Text, "下降") then
+                v:Destroy()
+            end
+        end
+    end
+
+    -- 2. スピード調整の再配置
+    local speedLabel = Instance.new("TextLabel")
+    speedLabel.Size = UDim2.new(0, 305, 0, 20)
+    speedLabel.Position = UDim2.new(0, 0, 0, 85)
+    speedLabel.BackgroundTransparency = 1
+    speedLabel.Text = "Speed: " .. Settings.SpeedValue
+    speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    speedLabel.Font = Enum.Font.SourceSansBold
+    speedLabel.TextSize = 14
+    speedLabel.Parent = charPage
+
+    local speedMinus = Instance.new("TextButton")
+    speedMinus.Size = UDim2.new(0, 40, 0, 35)
+    speedMinus.Position = UDim2.new(0, 0, 0, 110)
+    speedMinus.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    speedMinus.Text = "-"
+    speedMinus.TextColor3 = Color3.fromRGB(255, 255, 255)
+    speedMinus.Font = Enum.Font.SourceSansBold
+    speedMinus.Parent = charPage
+
+    local speedToggle = Instance.new("TextButton")
+    speedToggle.Size = UDim2.new(0, 100, 0, 35)
+    speedToggle.Position = UDim2.new(0, 45, 0, 110)
+    speedToggle.BackgroundColor3 = Settings.SpeedHack and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+    speedToggle.Text = "Speed: " .. (Settings.SpeedHack and "ON" or "OFF")
+    speedToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    speedToggle.Font = Enum.Font.SourceSansBold
+    speedToggle.Parent = charPage
+
+    local speedPlus = Instance.new("TextButton")
+    speedPlus.Size = UDim2.new(0, 40, 0, 35)
+    speedPlus.Position = UDim2.new(0, 150, 0, 110)
+    speedPlus.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+    speedPlus.Text = "+"
+    speedPlus.TextColor3 = Color3.fromRGB(255, 255, 255)
+    speedPlus.Font = Enum.Font.SourceSansBold
+    speedPlus.Parent = charPage
+
+    speedMinus.MouseButton1Click:Connect(function() Settings.SpeedValue = math.max(16, Settings.SpeedValue - 10); speedLabel.Text = "Speed: " .. Settings.SpeedValue end)
+    speedPlus.MouseButton1Click:Connect(function() Settings.SpeedValue = math.min(300, Settings.SpeedValue + 10); speedLabel.Text = "Speed: " .. Settings.SpeedValue end)
+    speedToggle.MouseButton1Click:Connect(function()
+        Settings.SpeedHack = not Settings.SpeedHack
+        speedToggle.Text = "Speed: " .. (Settings.SpeedHack and "ON" or "OFF")
+        speedToggle.BackgroundColor3 = Settings.SpeedHack and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+    end)
+
+    -- 3. フライスピード調整の再配置
+    local flyLabel = Instance.new("TextLabel")
+    flyLabel.Size = UDim2.new(0, 305, 0, 20)
+    flyLabel.Position = UDim2.new(0, 0, 0, 155)
+    flyLabel.BackgroundTransparency = 1
+    flyLabel.Text = "Fly Speed: " .. Settings.FlySpeed
+    flyLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    flyLabel.Font = Enum.Font.SourceSansBold
+    flyLabel.TextSize = 14
+    flyLabel.Parent = charPage
+
+    local flyMinus = Instance.new("TextButton")
+    flyMinus.Size = UDim2.new(0, 40, 0, 35)
+    flyMinus.Position = UDim2.new(0, 0, 0, 180)
+    flyMinus.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    flyMinus.Text = "-"
+    flyMinus.TextColor3 = Color3.fromRGB(255, 255, 255)
+    flyMinus.Font = Enum.Font.SourceSansBold
+    flyMinus.Parent = charPage
+
+    -- 上昇・下降ボタンを真ん中に配置
+    local upBtn = Instance.new("TextButton")
+    upBtn.Size = UDim2.new(0, 45, 0, 35)
+    upBtn.Position = UDim2.new(0, 45, 0, 180)
+    upBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 200)
+    upBtn.Text = "上昇"
+    upBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    upBtn.Font = Enum.Font.SourceSansBold
+    upBtn.TextSize = 12
+    upBtn.Parent = charPage
+
+    local downBtn = Instance.new("TextButton")
+    downBtn.Size = UDim2.new(0, 45, 0, 35)
+    downBtn.Position = UDim2.new(0, 95, 0, 180)
+    downBtn.BackgroundColor3 = Color3.fromRGB(200, 100, 50)
+    downBtn.Text = "下降"
+    downBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    downBtn.Font = Enum.Font.SourceSansBold
+    downBtn.TextSize = 12
+    downBtn.Parent = charPage
+
+    local flyPlus = Instance.new("TextButton")
+    flyPlus.Size = UDim2.new(0, 40, 0, 35)
+    flyPlus.Position = UDim2.new(0, 150, 0, 180)
+    flyPlus.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+    flyPlus.Text = "+"
+    flyPlus.TextColor3 = Color3.fromRGB(255, 255, 255)
+    flyPlus.Font = Enum.Font.SourceSansBold
+    flyPlus.Parent = charPage
+
+    flyMinus.MouseButton1Click:Connect(function() Settings.FlySpeed = math.max(10, Settings.FlySpeed - 10); flyLabel.Text = "Fly Speed: " .. Settings.FlySpeed end)
+    flyPlus.MouseButton1Click:Connect(function() Settings.FlySpeed = math.min(200, Settings.FlySpeed + 10); flyLabel.Text = "Fly Speed: " .. Settings.FlySpeed end)
+
+    -- 上昇・下降の処理
+    local isFlyingUp = false
+    local isFlyingDown = false
+    
+    upBtn.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isFlyingUp = true end end)
+    upBtn.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isFlyingUp = false end end)
+    downBtn.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isFlyingDown = true end end)
+    downBtn.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isFlyingDown = false end end)
+
+    -- フライ処理の上書き（上昇・下降ボタンと連動）
+    RunService.Heartbeat:Connect(function()
+        if Settings.Fly and LocalPlayer.Character then
+            local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            local bv = hrp and hrp:FindFirstChild("FlyVelocity")
+            if bv then
+                local targetVel = LocalPlayer.Character.Humanoid.MoveDirection * Settings.FlySpeed
+                if isFlyingUp or UserInputService:IsKeyDown(Enum.KeyCode.Space) then 
+                    targetVel = targetVel + Vector3.new(0, Settings.FlySpeed, 0) 
+                elseif isFlyingDown or UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then 
+                    targetVel = targetVel - Vector3.new(0, Settings.FlySpeed, 0) 
+                end
+                bv.Velocity = targetVel
+            end
+        end
+    end)
+end
