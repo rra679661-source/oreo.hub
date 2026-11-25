@@ -547,3 +547,155 @@ if chGui then
         end
     end
 end
+-- ================= 思いつく限りのAnti機能追加 =================
+
+-- 新しいAnti設定を追加
+Settings.AntiVoid = false
+Settings.AntiExplosion = false
+Settings.AntiRagdoll = false
+Settings.AntiBurn = false
+Settings.AntiNamecallKick = false
+Settings.AntiFPSDrop = false
+Settings.AntiToolDrop = false
+
+-- 守りタブにボタンを追加
+if Pages and Pages.Security then
+    -- 重複防止
+    for _, v in pairs(Pages.Security:GetChildren()) do
+        if v:IsA("TextButton") and string.find(v.Text, "Anti") then
+            if string.find(v.Text, "Void") or string.find(v.Text, "Explosion") or string.find(v.Text, "Ragdoll") or string.find(v.Text, "Burn") or string.find(v.Text, "Kick") or string.find(v.Text, "Lag") or string.find(v.Text, "Drop") then
+                v:Destroy()
+            end
+        end
+    end
+
+    local function createAntiBtn(text, posX, posY, settingKey)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 150, 0, 30)
+        btn.Position = UDim2.new(0, posX, 0, posY)
+        btn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        btn.Text = text .. ": OFF"
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.Font = Enum.Font.SourceSansBold
+        btn.TextSize = 12
+        btn.Parent = Pages.Security
+
+        btn.MouseButton1Click:Connect(function()
+            Settings[settingKey] = not Settings[settingKey]
+            btn.Text = text .. ": " .. (Settings[settingKey] and "ON" or "OFF")
+            btn.BackgroundColor3 = Settings[settingKey] and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+        end)
+        return btn
+    end
+
+    createAntiBtn("Anti Void", 0, 90, "AntiVoid")
+    createAntiBtn("Anti Explosion", 155, 90, "AntiExplosion")
+    createAntiBtn("Anti Ragdoll", 0, 130, "AntiRagdoll")
+    createAntiBtn("Anti Burn", 155, 130, "AntiBurn")
+    createAntiBtn("Anti Kick", 0, 170, "AntiNamecallKick")
+    createAntiBtn("Anti FPS Drop", 155, 170, "AntiFPSDrop")
+    createAntiBtn("Anti Tool Drop", 0, 210, "AntiToolDrop")
+end
+
+-- ================= Anti機能の処理ループ =================
+
+-- 1. Anti Void (奈落に落ちたら上に戻す)
+task.spawn(function()
+    while task.wait(0.5) do
+        if Settings.AntiVoid then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                if char.HumanoidRootPart.Position.Y < -50 then
+                    char.HumanoidRootPart.CFrame = CFrame.new(0, 50, 0) -- 安全な場所へ戻す
+                end
+            end
+        end
+    end
+end)
+
+-- 2. Anti Explosion (爆発で飛ばされない)
+-- ※Robloxの仕様上、ローカルで爆発の力を無効化します
+workspace.DescendantAdded:Connect(function(obj)
+    if Settings.AntiExplosion and obj:IsA("Explosion") then
+        obj.DestroyJointRadiusPercent = 0
+        obj.BlastPressure = 0
+        obj.BlastRadius = 0
+    end
+end)
+
+-- 3. Anti Ragdoll (吹き飛ばされ・ダウン状態の解除)
+task.spawn(function()
+    while task.wait(0.2) do
+        if Settings.AntiRagdoll then
+            local char = LocalPlayer.Character
+            if char then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum and hum.PlatformStand then
+                    hum.PlatformStand = false
+                end
+            end
+        end
+    end
+end)
+
+-- 4. Anti Burn (燃やされない)
+task.spawn(function()
+    while task.wait(0.5) do
+        if Settings.AntiBurn then
+            local char = LocalPlayer.Character
+            if char then
+                for _, v in pairs(char:GetDescendants()) do
+                    if v:IsA("Fire") or v:IsA("Smoke") then
+                        v:Destroy()
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- 5. Anti FPS Drop (重いパーティクルやエフェクトを消す)
+task.spawn(function()
+    while task.wait(2) do
+        if Settings.AntiFPSDrop then
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") then
+                    v.Enabled = false
+                end
+            end
+        end
+    end
+end)
+
+-- 6. Anti Tool Drop (武器を落とさせない)
+task.spawn(function()
+    while task.wait(0.1) do
+        if Settings.AntiToolDrop then
+            local char = LocalPlayer.Character
+            if char then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum then
+                    -- 手に持っているツールが地面に落ちないようにロック
+                    for _, tool in pairs(char:GetChildren()) do
+                        if tool:IsA("Tool") and tool.Parent ~= char then
+                            tool.Parent = char
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- 7. Anti Namecall Kick (強制キックから身を守る)
+-- ※hookmetamethodを使用して、Kick関数を無効化します
+if hookmetamethod then
+    local oldNamecall
+    oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+        local method = getnamecallmethod()
+        if Settings.AntiNamecallKick and method == "Kick" then
+            return nil -- キックを無効化
+        end
+        return oldNamecall(self, ...)
+    end)
+end
